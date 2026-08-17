@@ -19,6 +19,17 @@ jobs:
           python-version: "3.11"
       - run: python quickstart.py
 
+  deepseek-harness-course:
+    name: DeepSeek Harness course labs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+      - name: Run deterministic TypeScript labs
+        run: ./deepseek-harness-lessons/scripts/run_tests.sh
+
   project-tests:
     name: ${{ matrix.project.name }}
     runs-on: ubuntu-latest
@@ -29,7 +40,7 @@ jobs:
           - name: Knowledge Base QA
             path: portfolio-projects/knowledge-base-qa
             coverage: kb_qa
-            extras: PyMuPDF pdfplumber pillow httpx
+            extras: PyMuPDF pdfplumber pillow httpx rapidocr_onnxruntime
           - name: Research Assistant
             path: portfolio-projects/research-assistant
             coverage: research_assistant

@@ -6,6 +6,8 @@
 
 ### Added
 
+- 课程十二「DeepSeek Harness 源码精读与插件工程」（12 课）：锁定上游 commit `47f943859bef60e4160492346772ded9b24f765a`，覆盖 Cordis 生命周期、Profile/Bundle/Patch、Agent Loop、Session 事件溯源、LLM/Tool Runtime、Capability Seam、上下文、Subagent、产品表面与可审计 Bundle；每课提供零 Key 的 TypeScript 实验、练习和测试
+- DeepSeek Harness 上游快照准备与漂移检查脚本，以及 Node.js 24 课程 CI（12 套确定性测试）
 - 课程十一「Agent 执行骨架与上下文工程 / Harness」（10 课）：上下文账本、压缩纪律、跨会话记忆文件、工具返回值整形、子代理隔离、文件工作区、运行中改道与权限门、渐进披露与收益矩阵评估；research-assistant 升级为长途研究 v5（新增 118 项测试，全仓 592=449+143，分项目实跑与 CI 同口径）
 - 课程十「常驻主动式 Agent / Ambient」（10 课）：调度触发、变化检测、增量研究、打扰决策、收件箱、常驻守护、时段预算与收益矩阵评估；research-assistant 升级为常驻主动 v4（新增 112 项测试，全仓 474）
 - 中英文 README 首屏、学习路线、作品项目截图与可验证性说明

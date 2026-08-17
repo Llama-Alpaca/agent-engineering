@@ -1,0 +1,19 @@
+{
+  "repository": "https://github.com/deepseek-ai/deepseek-harness.git",
+  "commit": "47f943859bef60e4160492346772ded9b24f765a",
+  "branchAtInspection": "master",
+  "inspectedAt": "2026-08-16T00:00:00+08:00",
+  "rootVersion": "0.1.0-rc.5",
+  "publishedCliVersionAtInspection": "0.1.0-rc.6",
+  "license": "MIT",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "packageManager": "pnpm@11.7.0",
+  "stability": "developer-preview-breaking-changes",
+  "notes": [
+    "The source SHA is authoritative for source labs.",
+    "The published CLI version is recorded for packaging smoke only.",
+    "No Git tag or GitHub Release existed at inspection time."
+  ]
+}

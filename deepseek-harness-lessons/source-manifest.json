@@ -1,0 +1,65 @@
+{
+  "commit": "47f943859bef60e4160492346772ded9b24f765a",
+  "entries": [
+    {
+      "lesson": "00",
+      "paths": ["apps/cli/src/bin.ts", "apps/cli/src/profile-boot.ts", "docs/architecture.md", "docs/module-graph.md"],
+      "symbols": ["profile boot", "--dump-config", "bundle layering"]
+    },
+    {
+      "lesson": "01",
+      "paths": ["vendor/cordis/src/context.ts", "vendor/cordis/src/service.ts", "vendor/cordis/src/events.ts", "vendor/cordis/src/fiber.ts"],
+      "symbols": ["Context", "Service", "Context.effect", "Context.on", "Fiber.dispose"]
+    },
+    {
+      "lesson": "02",
+      "paths": ["packages/boot/app-boot/src/profile.ts", "packages/bundle/base/cordis.patch.yml", "packages/bundle/headless/cordis.patch.yml", "packages/bundle/web-app/cordis.patch.yml"],
+      "symbols": ["profile layers", "patch row replacement", "Loader config"]
+    },
+    {
+      "lesson": "03",
+      "paths": ["packages/core/agent/src/inbox.ts", "packages/core/agent/src/index.ts", "packages/core/agent-loop/src/agent.ts", "docs/agent-lifecycle.md"],
+      "symbols": ["Inbox", "ReactLoopAgent", "followup", "steer", "inject"]
+    },
+    {
+      "lesson": "04",
+      "paths": ["packages/core/session/src/types.ts", "packages/core/session/src/index.ts", "packages/core/session/src/surface.ts", "packages/session/session-persistence/src/"],
+      "symbols": ["SessionEventMap", "deriveMessages", "request/header", "fork"]
+    },
+    {
+      "lesson": "05",
+      "paths": ["packages/llm/llm/src/index.ts", "packages/llm/llm/src/types.ts", "packages/llm/llm/src/assembler.ts", "packages/llm/llm-deepseek/src/"],
+      "symbols": ["LlmRuntime", "LlmAdapter", "BlockAssembler", "StreamChunk"]
+    },
+    {
+      "lesson": "06",
+      "paths": ["packages/core/tools/src/index.ts", "packages/core/tools/src/schema.ts", "packages/core/agent-loop/src/tool-calls.ts", "docs/tool-execution-pipeline.md"],
+      "symbols": ["defineTool", "tools/pre-execute", "tools/execute", "tools/post-execute"]
+    },
+    {
+      "lesson": "07",
+      "paths": ["docs/capability-seams.md", "packages/core/scope/", "packages/fs/", "packages/shell/", "packages/subprocess/", "packages/sandbox/"],
+      "symbols": ["Service Definition", "Provider", "Consumer", "scope", "sandbox policy"]
+    },
+    {
+      "lesson": "08",
+      "paths": ["packages/core/system-prompt/", "packages/context/", "packages/compaction/", "packages/skill/", "packages/spill/", "packages/llm/token-meter/"],
+      "symbols": ["PromptAssembly", "compaction", "skill", "spill", "token meter"]
+    },
+    {
+      "lesson": "09",
+      "paths": ["packages/subagent/", "packages/workflow/", "packages/jobs/", "docs/subsystems/subagent.md"],
+      "symbols": ["spawn", "fork", "continuable", "workflow worker"]
+    },
+    {
+      "lesson": "10",
+      "paths": ["packages/bundle/headless/", "packages/acp/", "packages/sdk/", "python/sdk/", "docs/testing.md"],
+      "symbols": ["headless", "ACP", "JSON-RPC", "DeepSeekHarness", "snapshot"]
+    },
+    {
+      "lesson": "11",
+      "paths": ["docs/cookbook/adding-a-package.md", "docs/cookbook/adding-a-tool.md", "docs/cookbook/adding-an-llm-adapter.md", "docs/capability-seams.md"],
+      "symbols": ["installable bundle", "audited tool", "provider replacement"]
+    }
+  ]
+}

@@ -6,11 +6,11 @@
 
 [![Tests](https://github.com/kobejiasuoer/awesome-agent-engineering/actions/workflows/tests.yml/badge.svg)](https://github.com/kobejiasuoer/awesome-agent-engineering/actions/workflows/tests.yml)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Lessons](https://img.shields.io/badge/lessons-115-1f883d)](#learning-path)
-[![Tests](https://img.shields.io/badge/tests-592-0969da)](#verification)
+[![Lessons](https://img.shields.io/badge/lessons-127-1f883d)](#learning-path)
+[![Tests](https://img.shields.io/badge/tests-592%20%2B%2012%20suites-0969da)](#verification)
 [![License](https://img.shields.io/badge/license-MIT-f1e05a)](LICENSE)
 
-A hands-on **LLM application engineering course** for Python developers. Its 115 lessons follow one continuous path: hand-write the core mechanisms, translate them into LangChain and LangGraph, then integrate them into two tested projects with evaluation, APIs, and Docker support.
+A hands-on **LLM application engineering course** for Python developers. Its 127 lessons follow one continuous path: hand-write the core mechanisms, translate them into LangChain and LangGraph, study a real open-source Harness and its plugin architecture, then integrate the ideas into two tested projects with evaluation, APIs, and Docker support.
 
 This repository goes beyond API recipes. It asks: **Why choose this design? What are the trade-offs? How can an experiment prove that a new mechanism actually helps?**
 
@@ -20,12 +20,12 @@ This repository goes beyond API recipes. It asks: **Why choose this design? What
 
 | Courses | Portfolio apps | Automated tests | Languages |
 |---:|---:|---:|---:|
-| 11 / 115 lessons | 2 | 592 | Chinese + English |
+| 12 / 127 lessons | 2 | 592 + 12 TS suites | Chinese + English |
 
 - **Principles before frameworks:** hand-written RAG, Function Calling, and ReAct are paired with framework implementations.
 - **Evidence before claims:** RAGAS, ablations, trajectory evaluation, and local mini-benchmarks run through the curriculum.
 - **Engineering beyond demos:** auth, rate limiting, tracing, caching, load testing, MCP, and Docker land in the portfolio apps.
-- **Current topics:** multimodal documents, Agent memory, CodeAct, long-running tasks, GUI Agents, Agent production reliability, and ambient (always-on proactive) Agents.
+- **Current topics:** multimodal documents, Agent memory, CodeAct, long-running tasks, GUI Agents, production reliability, ambient Agents, context engineering, and open-source Harness internals.
 
 ## See the results
 
@@ -68,7 +68,7 @@ Install `requirements.txt` only when you need the complete course stack; browser
 ```mermaid
 flowchart LR
     A["RAG fundamentals"] --> B["Agent fundamentals"] --> C["Frameworks"] --> D["Multi-Agent workflows"]
-    D --> E["LLMOps"] --> F["Multimodal docs"] --> G["Agent frontiers"] --> H["GUI Agents"] --> I["Agent production reliability"] --> J["Ambient Agents"] --> K["Agent Harness"]
+    D --> E["LLMOps"] --> F["Multimodal docs"] --> G["Agent frontiers"] --> H["GUI Agents"] --> I["Agent production reliability"] --> J["Ambient Agents"] --> K["Agent Harness"] --> L["DeepSeek Harness source"]
 ```
 
 | Stage | Course | Main outcome | Progress |
@@ -84,6 +84,7 @@ flowchart LR
 | Production | [Agent production reliability](agent-ops-lessons/) | Step/cost budgets, circuit breaker, idempotent approvals, durable resume, chaos eval | 10/10 |
 | Frontier | [Ambient Agents](ambient-agent-lessons/) | Scheduled triggers, change detection, incremental research, interruption policy, always-on operations | 10/10 |
 | Frontier | [Agent Harness](harness-lessons/) | Context ledger, disciplined compaction, memory files, subagent isolation, steering & progressive disclosure | 10/10 |
+| Source study | [DeepSeek Harness internals](deepseek-harness-lessons/) | Cordis plugin tree, Agent Loop, event sourcing, provider replacement, product surfaces | 12/12 |
 
 ## Portfolio projects
 
@@ -95,7 +96,7 @@ flowchart LR
 Both projects expose FastAPI services, Docker setups, tests, and fallback paths when optional external capabilities are disabled. They are engineering references, not universal production-capacity guarantees; load-test and validate them in your own deployment environment.
 
 <details>
-<summary><strong>Expand the complete 115-lesson catalog</strong></summary>
+<summary><strong>Expand the complete 127-lesson catalog</strong></summary>
 
 
 ## 📚 Course 1: Hand-written RAG (9 lessons)
@@ -327,6 +328,27 @@ The first seven courses grew research-assistant into a deep agent that **thinks*
 
 > All **10 lessons** done 🎉. **Two through-lines:** ① a window-economy main line (the fourth budget layer—space: every token pays rent to stay in attention; the ledger measures rent, shaping cuts it, compaction reclaims, externalization ends the lease—the same coin as Course 10's attention economy, spent on the model instead of the human); ② an externalization main line (virtual memory: window=RAM, files=disk, compaction=swap, subagents=process isolation, indexes=lazy loading). Killer row: **"truncation buys survival, not memory."** Landing adds 118 tests to research-assistant (449 total, all green); all nine switches default off with zero tax on clean runs, every test deterministic and reproducible (injectable tokenizer, byte-identical double runs).
 
+## Course 12: DeepSeek Harness Source Study & Plugin Engineering (12 lessons)
+
+> This course moves from an abstract Harness to a real codebase. It pins DeepSeek Harness at commit `47f943859bef60e4160492346772ded9b24f765a` and traces one architecture path from CLI/Profile through the Cordis plugin tree, Agent Loop, LLM/Tool runtimes, Session log, and product surfaces. Because upstream is still a developer preview, each lesson separates transferable principles, snapshot-specific implementation, and the course-owned offline model.
+
+| # | Lesson | What you learn |
+|---:|---|---|
+| 00 | [Baseline, source lock, and map](deepseek-harness-lessons/00_baseline_source_map/) | Pinned SHA, CLI/Profile layers, durable/live events, TypeScript bridge |
+| 01 | [Cordis lifecycle](deepseek-harness-lessons/01_cordis_lifecycle/) | Services, injection, event modes, Fiber disposal, leak-free reloads |
+| 02 | [Profile, Bundle, and Patch](deepseek-harness-lessons/02_profile_bundle_composition/) | Config layers, whole-row replacement, dependency activation, reload provenance |
+| 03 | [Agent Turn / Step Loop](deepseek-harness-lessons/03_agent_turn_step_loop/) | Registry, Inbox, followup/steer/inject, cancellation, balanced events |
+| 04 | [Session event sourcing](deepseek-harness-lessons/04_session_event_sourcing/) | Append-only log, surface projection, resume, fork, reconstruction invariants |
+| 05 | [Streaming LLM Adapter](deepseek-harness-lessons/05_llm_streaming_adapter/) | Provider-neutral streams, chunk assembly, usage, retry, errors, cancellation |
+| 06 | [Tool Runtime and safety pipeline](deepseek-harness-lessons/06_tool_execution_pipeline/) | Schema, policy, hooks, canonical results, concurrency barriers, cancellation |
+| 07 | [Capability seams and sandbox boundary](deepseek-harness-lessons/07_capability_sandbox/) | Definition/Provider/Consumer, isolated realms, approval, fail-closed policy |
+| 08 | [Context, compaction, Skill, and Spill](deepseek-harness-lessons/08_context_scope/) | Prompt assembly, view transforms, ablation matrix, agent-scoped skills |
+| 09 | [Subagent, Workflow, and ownership](deepseek-harness-lessons/09_subagent_workflow/) | Fresh/fork, continuation, parent-child logs, failure propagation, quiescence |
+| 10 | [Product surfaces and evidence levels](deepseek-harness-lessons/10_surfaces_testing/) | Headless, ACP, JSON-RPC, Python SDK, layered testing evidence |
+| 11 | [Capstone: auditable Agent Bundle](deepseek-harness-lessons/11_capstone_auditable_bundle/) | Replaceable evidence Provider, policy audit, recovery, child review, multiple surfaces |
+
+> All **12 lessons** are complete. Every lesson includes a principles README, runnable `code.ts`, exercises, and deterministic tests. The default path needs no API key, network, or upstream dependency installation. The scripts verify the pinned checkout and all source anchors. Offline labs prove state-machine and engineering invariants; they do not substitute for an upstream build, a real-model run, or native platform-sandbox validation.
+
 </details>
 
 
@@ -335,9 +357,10 @@ The first seven courses grew research-assistant into a deep agent that **thinks*
 ```bash
 python -m pytest portfolio-projects/knowledge-base-qa/tests -q
 python -m pytest portfolio-projects/research-assistant/tests -q
+./deepseek-harness-lessons/scripts/run_tests.sh
 ```
 
-External model calls are mocked by default so CI remains reproducible. Real-model evaluation and load-test methods live in each project's `eval/` and `loadtest/` directories; environment-dependent numbers should not be treated as production promises.
+The Python projects retain 592 tests; Course 12 adds 12 dependency-free TypeScript test suites run under Node.js 24 in CI. External model calls are mocked by default. Real-model evaluation, full upstream composition, and platform sandbox results require separate validation and must not be inferred from keyless labs.
 
 ---
 
@@ -346,8 +369,8 @@ External model calls are mocked by default so CI remains reproducible. Real-mode
 ```
 RAG-test/
 ├── README.md                  ← Course index (Chinese)
-├── README.en.md               ← You are here: eleven courses + portfolio overview (English)
-├── requirements.txt           ← Dependencies (shared across all eleven courses)
+├── README.en.md               ← You are here: twelve courses + portfolio overview (English)
+├── requirements.txt           ← Python course and project dependencies
 ├── .env.example               ← API key config template
 ├── data/sample_docs/          ← Sample docs for exercises (shared across courses)
 ├── data/multimodal_docs/      ← Multimodal course poison doc set (scan/table/chart PDF + golden questions)
@@ -362,13 +385,14 @@ RAG-test/
 ├── agent-ops-lessons/         ← Course 9: Agent Production Reliability / AgentOps (10 lessons, done)
 ├── ambient-agent-lessons/     ← Course 10: Ambient / Always-on Proactive Agents (10 lessons, done)
 ├── harness-lessons/           ← Course 11: Agent Harness & Context Engineering (10 lessons, done)
+├── deepseek-harness-lessons/  ← Course 12: DeepSeek Harness source study & plugin engineering (12 lessons, done)
 ├── portfolio-projects/        ← 🚀 Production-grade portfolio projects (landings after the courses; main battleground for ops/docint/frontier/gui/agentops/ambient)
 │   ├── knowledge-base-qa/     ←   Enterprise KB QA (RAG, multimodal document intelligence v3)
 │   └── research-assistant/    ←   AI Research Assistant (multi-agent + FastAPI + Docker, long-haul research v5)
 └── docs/                      ← Design docs and implementation plans
 ```
 
-Each lesson ships as a fixed trio: **① a principles README (the why and the trade-offs) + ② a runnable `code.py` (with detailed comments) + ③ exercises.**
+Each lesson includes **① a principles README (the why and trade-offs) + ② runnable code (`code.py` for the Python courses and `code.ts` for Course 12) + ③ exercises.** Course 12 also includes a `tests/` directory per lesson.
 Portfolio projects use a **modular engineering layout** (`src/` + `api/` + `tests/` + `Docker`), organized to production standards.
 
 ---
@@ -377,7 +401,7 @@ Portfolio projects use a **modular engineering layout** (`src/` + `api/` + `test
 
 - **Run the code.** Don't just read. A lot of RAG intuition comes from changing parameters yourself and watching the output change.
 - Learn in order—each lesson builds on the previous one.
-- Each lesson contains a principles README, runnable `code.py`, and experiments. Run the baseline before changing parameters.
+- Each lesson contains a principles README, runnable code, and experiments. Run the baseline before changing parameters.
 - Use the GitHub issue templates for bugs and lesson feedback.
 
 ---

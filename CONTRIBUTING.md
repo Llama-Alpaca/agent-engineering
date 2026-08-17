@@ -17,9 +17,10 @@
 python quickstart.py
 python -m pytest portfolio-projects/knowledge-base-qa/tests -q
 python -m pytest portfolio-projects/research-assistant/tests -q
+./deepseek-harness-lessons/scripts/run_tests.sh
 ```
 
-只修改单节课程时，至少运行该课程的 `code.py`，并在 Pull Request 中说明是否调用了真实 API。不要提交 `.env`、API Key、本地数据库、浏览器配置或未经脱敏的运行数据。
+只修改单节课程时，至少运行该课程的 `code.py` 或 `code.ts` 及对应测试，并在 Pull Request 中说明是否调用了真实 API。不要提交 `.env`、API Key、本地数据库、浏览器配置或未经脱敏的运行数据。
 
 ## Pull Request
 

@@ -46,3 +46,6 @@ portfolio-projects/research-assistant/workspace/
 portfolio-projects/research-assistant/memory_files/
 *.db
 *.db-journal
+
+# DeepSeek Harness 课程临时输出（源码快照始终在系统临时目录）
+deepseek-harness-lessons/outputs/
