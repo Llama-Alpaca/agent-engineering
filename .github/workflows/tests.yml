@@ -20,7 +20,7 @@ jobs:
       - run: python quickstart.py
 
   deepseek-harness-course:
-    name: DeepSeek Harness course labs
+    name: DeepSeek Harness course labs (20 suites)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +28,9 @@ jobs:
         with:
           node-version: "24.x"
       - name: Run deterministic TypeScript labs
-        run: ./deepseek-harness-lessons/scripts/run_tests.sh
+        run: |
+          ./deepseek-harness-lessons/scripts/run_tests.sh
+          ./deepseek-harness-advanced-lessons/scripts/run_tests.sh
 
   project-tests:
     name: ${{ matrix.project.name }}

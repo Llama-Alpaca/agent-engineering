@@ -6,11 +6,11 @@
 
 [![Tests](https://github.com/kobejiasuoer/awesome-agent-engineering/actions/workflows/tests.yml/badge.svg)](https://github.com/kobejiasuoer/awesome-agent-engineering/actions/workflows/tests.yml)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Lessons](https://img.shields.io/badge/lessons-127-1f883d)](#learning-path)
-[![Tests](https://img.shields.io/badge/tests-592%20%2B%2012%20suites-0969da)](#verification)
+[![Lessons](https://img.shields.io/badge/lessons-135-1f883d)](#learning-path)
+[![Tests](https://img.shields.io/badge/tests-592%20%2B%2020%20suites-0969da)](#verification)
 [![License](https://img.shields.io/badge/license-MIT-f1e05a)](LICENSE)
 
-A hands-on **LLM application engineering course** for Python developers. Its 127 lessons follow one continuous path: hand-write the core mechanisms, translate them into LangChain and LangGraph, study a real open-source Harness and its plugin architecture, then integrate the ideas into two tested projects with evaluation, APIs, and Docker support.
+A hands-on **LLM application engineering course** for Python developers. Its 135 lessons follow one continuous path: hand-write the core mechanisms, translate them into LangChain and LangGraph, study a real open-source Harness from runtime internals through protocols and product surfaces, then integrate the ideas into two tested projects with evaluation, APIs, and Docker support.
 
 This repository goes beyond API recipes. It asks: **Why choose this design? What are the trade-offs? How can an experiment prove that a new mechanism actually helps?**
 
@@ -20,7 +20,7 @@ This repository goes beyond API recipes. It asks: **Why choose this design? What
 
 | Courses | Portfolio apps | Automated tests | Languages |
 |---:|---:|---:|---:|
-| 12 / 127 lessons | 2 | 592 + 12 TS suites | Chinese + English |
+| 13 / 135 lessons | 2 | 592 + 20 TS suites | Chinese + English |
 
 - **Principles before frameworks:** hand-written RAG, Function Calling, and ReAct are paired with framework implementations.
 - **Evidence before claims:** RAGAS, ablations, trajectory evaluation, and local mini-benchmarks run through the curriculum.
@@ -68,7 +68,7 @@ Install `requirements.txt` only when you need the complete course stack; browser
 ```mermaid
 flowchart LR
     A["RAG fundamentals"] --> B["Agent fundamentals"] --> C["Frameworks"] --> D["Multi-Agent workflows"]
-    D --> E["LLMOps"] --> F["Multimodal docs"] --> G["Agent frontiers"] --> H["GUI Agents"] --> I["Agent production reliability"] --> J["Ambient Agents"] --> K["Agent Harness"] --> L["DeepSeek Harness source"]
+    D --> E["LLMOps"] --> F["Multimodal docs"] --> G["Agent frontiers"] --> H["GUI Agents"] --> I["Agent production reliability"] --> J["Ambient Agents"] --> K["Agent Harness"] --> L["DeepSeek Harness source"] --> M["Harness protocols and products"]
 ```
 
 | Stage | Course | Main outcome | Progress |
@@ -85,6 +85,7 @@ flowchart LR
 | Frontier | [Ambient Agents](ambient-agent-lessons/) | Scheduled triggers, change detection, incremental research, interruption policy, always-on operations | 10/10 |
 | Frontier | [Agent Harness](harness-lessons/) | Context ledger, disciplined compaction, memory files, subagent isolation, steering & progressive disclosure | 10/10 |
 | Source study | [DeepSeek Harness internals](deepseek-harness-lessons/) | Cordis plugin tree, Agent Loop, event sourcing, provider replacement, product surfaces | 12/12 |
+| Advanced | [DeepSeek Harness protocols and products](deepseek-harness-advanced-lessons/) | ACP/SDK, host projections, presets, jobs/workflows, security, E2E | 8/8 |
 
 ## Portfolio projects
 
@@ -96,7 +97,7 @@ flowchart LR
 Both projects expose FastAPI services, Docker setups, tests, and fallback paths when optional external capabilities are disabled. They are engineering references, not universal production-capacity guarantees; load-test and validate them in your own deployment environment.
 
 <details>
-<summary><strong>Expand the complete 127-lesson catalog</strong></summary>
+<summary><strong>Expand the complete 135-lesson catalog</strong></summary>
 
 
 ## 📚 Course 1: Hand-written RAG (9 lessons)
@@ -349,6 +350,23 @@ The first seven courses grew research-assistant into a deep agent that **thinks*
 
 > All **12 lessons** are complete. Every lesson includes a principles README, runnable `code.ts`, exercises, and deterministic tests. The default path needs no API key, network, or upstream dependency installation. The scripts verify the pinned checkout and all source anchors. Offline labs prove state-machine and engineering invariants; they do not substitute for an upstream build, a real-model run, or native platform-sandbox validation.
 
+## Course 13: DeepSeek Harness Advanced Protocols, Product Surfaces & Sustainable Plugins (8 lessons)
+
+> This course pins upstream at `99f6f02fecdb7dff40c3fbc9470f5907c29f74ca`, around `dsh@0.1.0-rc.7`. It builds on Course 12's runtime spine and follows how ACP, SDKs, Web/TUI, presets, background jobs, and tests consume that spine. The emphasis shifts from reading internals to maintaining cross-surface contracts, recovery boundaries, and upstream compatibility.
+
+| # | Lesson | What you learn |
+|---:|---|---|
+| 00 | [ACP rich content / JSON-RPC boundary](deepseek-harness-advanced-lessons/00_acp_jsonrpc_boundary/) | Content admission, cancellation races, request/notification/error routing, stdout purity |
+| 01 | [SDK receipts and activity intervals](deepseek-harness-advanced-lessons/01_sdk_facade/) | Durable enqueue receipts, notification ownership, receipt-to-idle, process disposal |
+| 02 | [Host projections, replay, and long lists](deepseek-harness-advanced-lessons/02_event_projection_replay/) | Higher-seq-wins, consistent cuts, window prepending, stable node identity |
+| 03 | [Presets, standing mounts, and recompose](deepseek-harness-advanced-lessons/03_preset_composition_hmr/) | Generation reuse, scope joins, failed-switch rollback, service-leak checks |
+| 04 | [Jobs, workflows, and recovery boundaries](deepseek-harness-advanced-lessons/04_jobs_recovery/) | Owner fences, first-wins settlement, bounded wakeups, worker cancellation, process-local limits |
+| 05 | [Approval, permission presets, and sandbox evidence](deepseek-harness-advanced-lessons/05_security_approval/) | Paired audit events, fail-closed decisions, durable permission knobs, native evidence |
+| 06 | [E2E, snapshots, and performance evidence](deepseek-harness-advanced-lessons/06_e2e_testing_performance/) | Five official upstream test lanes, real entries, replay, browser perf/stress boundaries |
+| 07 | [Upstream evolution capstone](deepseek-harness-advanced-lessons/07_upstream_evolution_capstone/) | Real `rc.5 -> rc.7` blob drift, consumer compatibility matrices, migration gates |
+
+> All **8 lessons** are complete, each with keyless deterministic TypeScript labs, exercises, and tests. The course keeps offline invariants, real upstream composition, browser E2E, native sandboxing, and real performance evidence separate.
+
 </details>
 
 
@@ -358,9 +376,10 @@ The first seven courses grew research-assistant into a deep agent that **thinks*
 python -m pytest portfolio-projects/knowledge-base-qa/tests -q
 python -m pytest portfolio-projects/research-assistant/tests -q
 ./deepseek-harness-lessons/scripts/run_tests.sh
+./deepseek-harness-advanced-lessons/scripts/run_tests.sh
 ```
 
-The Python projects retain 592 tests; Course 12 adds 12 dependency-free TypeScript test suites run under Node.js 24 in CI. External model calls are mocked by default. Real-model evaluation, full upstream composition, and platform sandbox results require separate validation and must not be inferred from keyless labs.
+The Python projects retain 592 tests; Courses 12 and 13 add 20 dependency-free TypeScript test suites run under Node.js 24 in CI. External model calls are mocked by default. Real-model evaluation, full upstream composition, browser performance, and platform sandbox results require separate validation and must not be inferred from keyless labs.
 
 ---
 
@@ -369,7 +388,7 @@ The Python projects retain 592 tests; Course 12 adds 12 dependency-free TypeScri
 ```
 RAG-test/
 ├── README.md                  ← Course index (Chinese)
-├── README.en.md               ← You are here: twelve courses + portfolio overview (English)
+├── README.en.md               ← You are here: thirteen courses + portfolio overview (English)
 ├── requirements.txt           ← Python course and project dependencies
 ├── .env.example               ← API key config template
 ├── data/sample_docs/          ← Sample docs for exercises (shared across courses)
@@ -386,13 +405,14 @@ RAG-test/
 ├── ambient-agent-lessons/     ← Course 10: Ambient / Always-on Proactive Agents (10 lessons, done)
 ├── harness-lessons/           ← Course 11: Agent Harness & Context Engineering (10 lessons, done)
 ├── deepseek-harness-lessons/  ← Course 12: DeepSeek Harness source study & plugin engineering (12 lessons, done)
+├── deepseek-harness-advanced-lessons/ ← Course 13: DeepSeek Harness protocols, products & sustainable plugins (8 lessons, done)
 ├── portfolio-projects/        ← 🚀 Production-grade portfolio projects (landings after the courses; main battleground for ops/docint/frontier/gui/agentops/ambient)
 │   ├── knowledge-base-qa/     ←   Enterprise KB QA (RAG, multimodal document intelligence v3)
 │   └── research-assistant/    ←   AI Research Assistant (multi-agent + FastAPI + Docker, long-haul research v5)
 └── docs/                      ← Design docs and implementation plans
 ```
 
-Each lesson includes **① a principles README (the why and trade-offs) + ② runnable code (`code.py` for the Python courses and `code.ts` for Course 12) + ③ exercises.** Course 12 also includes a `tests/` directory per lesson.
+Each lesson includes **① a principles README (the why and trade-offs) + ② runnable code (`code.py` for the Python courses and `code.ts` for Courses 12–13) + ③ exercises.** Both DeepSeek Harness courses include a `tests/` directory per lesson.
 Portfolio projects use a **modular engineering layout** (`src/` + `api/` + `tests/` + `Docker`), organized to production standards.
 
 ---

@@ -6,11 +6,11 @@
 
 [![Tests](https://github.com/kobejiasuoer/awesome-agent-engineering/actions/workflows/tests.yml/badge.svg)](https://github.com/kobejiasuoer/awesome-agent-engineering/actions/workflows/tests.yml)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![Lessons](https://img.shields.io/badge/lessons-127-1f883d)](#课程路线)
-[![Tests](https://img.shields.io/badge/tests-592%20%2B%2012%20suites-0969da)](#可验证性)
+[![Lessons](https://img.shields.io/badge/lessons-135-1f883d)](#课程路线)
+[![Tests](https://img.shields.io/badge/tests-592%20%2B%2020%20suites-0969da)](#可验证性)
 [![License](https://img.shields.io/badge/license-MIT-f1e05a)](LICENSE)
 
-这是一套面向 Python 开发者的 **LLM 应用工程实战课程**。127 节课程沿同一条主线递进：先手写核心机制，再用 LangChain / LangGraph 工程化，最后进入真实开源 Harness 的源码与插件工程，并落到两个带测试、评估、API 与 Docker 的完整项目。
+这是一套面向 Python 开发者的 **LLM 应用工程实战课程**。135 节课程沿同一条主线递进：先手写核心机制，再用 LangChain / LangGraph 工程化，最后进入真实开源 Harness 的源码、协议、产品表面与插件工程，并落到两个带测试、评估、API 与 Docker 的完整项目。
 
 这里不只展示“怎么调 API”，还会回答三个更难的问题：**为什么这样设计、不同方案如何取舍、加入一个机制后怎样证明它真的有效。**
 
@@ -20,7 +20,7 @@
 
 | 课程 | 作品项目 | 自动化测试 | 语言 |
 |---:|---:|---:|---:|
-| 12 门 / 127 节 | 2 个 | 592 项 + 12 套 TS 课程测试 | 中文 + English |
+| 13 门 / 135 节 | 2 个 | 592 项 + 20 套 TS 课程测试 | 中文 + English |
 
 - **从原理到框架**：RAG、Function Calling、ReAct 都先手写，再对照框架实现。
 - **从结果到证据**：RAGAS、消融实验、Agent 轨迹评估与 mini-benchmark 贯穿课程。
@@ -68,7 +68,7 @@ copy .env.example .env   # macOS / Linux: cp .env.example .env
 ```mermaid
 flowchart LR
     A["RAG 原理"] --> B["Agent 原理"] --> C["框架工程"] --> D["多 Agent 编排"]
-    D --> E["LLMOps"] --> F["多模态文档"] --> G["Agent 前沿"] --> H["GUI Agent"] --> I["Agent 生产可靠性"] --> J["常驻主动 Agent"] --> K["Agent 执行骨架"] --> L["DeepSeek Harness 源码"]
+    D --> E["LLMOps"] --> F["多模态文档"] --> G["Agent 前沿"] --> H["GUI Agent"] --> I["Agent 生产可靠性"] --> J["常驻主动 Agent"] --> K["Agent 执行骨架"] --> L["DeepSeek Harness 源码"] --> M["Harness 协议与产品工程"]
 ```
 
 | 阶段 | 课程 | 核心产出 | 进度 |
@@ -85,6 +85,7 @@ flowchart LR
 | 前沿 | [常驻主动 Agent](ambient-agent-lessons/) | 调度触发、变化检测、增量研究、打扰决策、常驻运营 | 10/10 |
 | 前沿 | [Agent 执行骨架](harness-lessons/) | 上下文账本、压缩纪律、记忆文件、子代理隔离、改道与渐进披露 | 10/10 |
 | 源码 | [DeepSeek Harness 源码精读](deepseek-harness-lessons/) | Cordis 插件树、Agent Loop、事件溯源、能力替换与产品表面 | 12/12 |
+| 进阶 | [DeepSeek Harness 协议与产品工程](deepseek-harness-advanced-lessons/) | ACP/SDK、Host Projection、Preset、Jobs/Workflow、安全与 E2E | 8/8 |
 
 ## 作品项目
 
@@ -96,7 +97,7 @@ flowchart LR
 两个项目通过 MCP 打通，均提供 FastAPI、Docker、测试与关闭外部能力后的降级路径。它们是课程机制的工程样例；实际生产容量与可靠性仍应在你的部署环境中重新压测和验证。
 
 <details>
-<summary><strong>展开 127 节完整课程目录</strong></summary>
+<summary><strong>展开 135 节完整课程目录</strong></summary>
 
 
 ## 📚 课程一：RAG 手写课程（共 9 节课）
@@ -350,6 +351,23 @@ flowchart LR
 
 > 已完成全部 **12 节课**。每课包含原理 README、可运行 `code.ts`、练习和确定性测试；默认不需要 API Key、网络或上游依赖安装。课程脚本已校验固定 checkout 与 12 课源码清单。离线实验能证明状态机和工程不变量，不能替代上游完整 build、真实模型调用或原生平台沙箱验证。
 
+## 课程十三：DeepSeek Harness 进阶：协议、产品表面与可持续插件工程（共 8 节课）
+
+> 本课锁定上游 `99f6f02fecdb7dff40c3fbc9470f5907c29f74ca`（`dsh@0.1.0-rc.7` 附近快照），承接课程十二的运行时骨架，继续追踪同一内核如何被 ACP、SDK、Web/TUI、Preset、后台任务和测试系统消费。重点从“看懂源码”转向“维护跨表面契约、恢复边界和上游兼容性”。
+
+| # | 课程 | 核心内容 |
+|---|---|---|
+| 00 | [ACP Rich Content / JSON-RPC 边界](deepseek-harness-advanced-lessons/00_acp_jsonrpc_boundary/) | content admission、取消竞态、request/notification/error 分流与 stdout 纯度 |
+| 01 | [SDK Receipt 与活动区间](deepseek-harness-advanced-lessons/01_sdk_facade/) | durable enqueue receipt、notification 归因、receipt-to-idle 与进程回收 |
+| 02 | [Host Projection、Replay 与长列表](deepseek-harness-advanced-lessons/02_event_projection_replay/) | higher-seq-wins、consistent cut、窗口前插与节点 identity |
+| 03 | [Preset、Standing Mount 与 Recompose](deepseek-harness-advanced-lessons/03_preset_composition_hmr/) | generation 复用、scope join、失败切换回滚与 service 泄漏检测 |
+| 04 | [Jobs、Workflow 与恢复边界](deepseek-harness-advanced-lessons/04_jobs_recovery/) | owner fence、first-wins、有限唤醒、worker 取消与 process-local 缺口 |
+| 05 | [审批、Permission Preset 与沙箱证据](deepseek-harness-advanced-lessons/05_security_approval/) | 成对审计、fail closed、durable permission knob 与 native evidence |
+| 06 | [E2E、Snapshot 与性能证据](deepseek-harness-advanced-lessons/06_e2e_testing_performance/) | 上游五条正式测试 lane、real entry、replay 与浏览器 perf/stress 边界 |
+| 07 | [上游演进毕业项目](deepseek-harness-advanced-lessons/07_upstream_evolution_capstone/) | `rc.5 -> rc.7` 真实 blob drift、消费者兼容矩阵与迁移门 |
+
+> 已完成全部 **8 节课**。每课均提供零 Key 的确定性 TypeScript 实验、练习和测试；课程明确区分离线不变量、真实上游 composition、浏览器 E2E、原生 sandbox 和真实性能证据。
+
 </details>
 
 
@@ -359,9 +377,10 @@ flowchart LR
 python -m pytest portfolio-projects/knowledge-base-qa/tests -q
 python -m pytest portfolio-projects/research-assistant/tests -q
 ./deepseek-harness-lessons/scripts/run_tests.sh
+./deepseek-harness-advanced-lessons/scripts/run_tests.sh
 ```
 
-Python 项目保留 592 项测试；课程十二另有 12 套零依赖 TypeScript 测试，并在 CI 使用 Node.js 24 运行。测试默认 mock 外部模型调用，适合稳定复现。真实模型效果、RAGAS、上游完整组合和平台沙箱结果都必须单独验证，不能从 keyless 实验直接推导。
+Python 项目保留 592 项测试；课程十二和十三共有 20 套零依赖 TypeScript 测试，并在 CI 使用 Node.js 24 运行。测试默认 mock 外部模型调用，适合稳定复现。真实模型效果、RAGAS、上游完整组合、浏览器性能和平台沙箱结果都必须单独验证，不能从 keyless 实验直接推导。
 
 ---
 
@@ -369,7 +388,7 @@ Python 项目保留 592 项测试；课程十二另有 12 套零依赖 TypeScrip
 
 ```
 RAG-test/
-├── README.md                  ← 你在这里：十二门课程 + 作品集项目总览
+├── README.md                  ← 你在这里：十三门课程 + 作品集项目总览
 ├── requirements.txt           ← Python 课程与项目依赖
 ├── .env.example               ← API Key 配置模板
 ├── data/sample_docs/          ← Python 课程共用的示例文档
@@ -386,13 +405,14 @@ RAG-test/
 ├── ambient-agent-lessons/     ← 课程十：常驻主动式 Agent / Ambient（10 课，已完成）
 ├── harness-lessons/           ← 课程十一：Agent 执行骨架与上下文工程（10 课，已完成）
 ├── deepseek-harness-lessons/  ← 课程十二：DeepSeek Harness 源码精读与插件工程（12 课，已完成）
+├── deepseek-harness-advanced-lessons/ ← 课程十三：DeepSeek Harness 协议、产品表面与插件工程（8 课，已完成）
 ├── portfolio-projects/        ← 🚀 生产级作品集项目（学完课程后的落地，ops/docint/frontier/gui/agentops/ambient 主战场）
 │   ├── knowledge-base-qa/     ←   企业知识库问答（RAG，多模态文档智能 v3）
 │   └── research-assistant/    ←   AI 研究分析助手（多智能体 + FastAPI + Docker，会上网，长途研究 v5）
 └── docs/                      ← 设计文档与实现计划
 ```
 
-每节课至少包含：**①原理 README（讲 why 和取舍）+ ②可运行代码（Python 课程为 `code.py`，课程十二为 `code.ts`）+ ③练习**；课程十二另外逐课提供 `tests/`。
+每节课至少包含：**①原理 README（讲 why 和取舍）+ ②可运行代码（Python 课程为 `code.py`，课程十二和十三为 `code.ts`）+ ③练习**；两门 DeepSeek Harness 课程另外逐课提供 `tests/`。
 作品集项目则是**模块化工程结构**（src/ + api/ + tests/ + Docker），按生产标准组织。
 
 ---
