@@ -4,6 +4,16 @@
 
 L01 说了"一切皆插件"，但插件从哪来、以什么组合跑起来？答案不在代码里，在**组合系统**里：一个运行中的 dsh = 一棵由配置组装出的插件树。
 
+## 常规做法会怎么坏：大配置 + deep merge 的三种病
+
+多数系统的常规做法是"一份大配置文件 + 各层 deep merge"（基础层给默认值，用户层覆盖个别字段）。它坏起来的方式很典型：
+
+1. **字段来源不可知。** 上游升级把某行加了一个新字段，用户 patch 只覆盖了半个字段——merge 出一个谁都没写过、只在用户机器上出现的组合。排查时没人能回答"这个值到底来自哪一层"。
+2. **回滚不等于撤销。** deep merge 之后，删掉用户 patch 不一定回到上游原状（merge 过程可能已经把展开值烤进缓存）——"撤销"失去定义。
+3. **工具与真实各说各话。** dump/inspect 命令往往自己再实现一遍 merge 逻辑，输出和真正 boot 的组合悄悄不同——你看到的不就是你挂载的。
+
+dsh 的回答在第 2、3 种病上是**结构性**的：整行替换（没有 merge，来源只有"至多一个 bundle 层 + 用户层"）、`structuredClone` 输入（patch 永远不能把值烤进缓存）、dump 与 boot 走**同一次** `applyEntryPatches` 调用。第一种病则被公开声明的取舍消化：整行替换要求 patch 重述全部字段，啰嗦换来可解释——上游把这个取舍直接写进 Known Limitations 而不是用 merge 魔法掩盖。
+
 ## 阅读地图
 
 1. `apps/cli/src/profile-boot.ts` —— 层从哪来、顺序是什么
@@ -67,12 +77,14 @@ ls vendor/include/tests/ 2>/dev/null || find . -path ./node_modules -prune -o -n
 grep -n "origin, patched by\|renderConfigDump" packages/boot/app-boot/src/index.ts
 ```
 
-## 设计思想
+## 这样设计买到了什么，付出什么
 
-1. **可解释性优先于便利性**。整行替换写起来啰嗦（要重述全部字段），换来的是每个值的来源可追溯、回滚语义明确——上游把这个取舍写进 Known Limitations 而不是用 merge 魔法掩盖。
-2. **所见即所挂载**。dump 与 boot 共享同一条组合代码，是"配置即架构"可信的前提。
-3. **组合是事务**。`EntryGroup.update` 全量 diff + 失败回滚；patch "存在但解析失败"必须 throw，"落空"才 warn——misconfiguration 与 no-op 有明确分界。
-4. **行顺序无语义**。加载顺序由服务依赖图决定，配置里写不出"启动顺序"，也就写不出顺序耦合。
+1. **"我的 dsh 到底在跑什么"永远有精确答案**——`--dump-config` 打印的就是 boot 的（同一条代码、同一份算法），且每行带来源链。常规做法里"配置漂移排查"这个工种在这里被结构性取消。
+2. **回滚有定义**——去掉一层 patch 就精确回到没有它的状态（`structuredClone` 保证没有值被烤进缓存），"撤销"是可测试的性质而不是愿望。
+3. **加一个产品 = 加一个 bundle 层**——web-app 与 headless 是同一套包上的两份组装清单，不是两个代码库（L10 会看到更多表面吃这个红利）。
+4. **组合是事务**——`EntryGroup.update` 全量 diff + 失败回滚；patch "存在但解析失败"必须 throw，"落空"才 warn——misconfiguration 与 no-op 有明确分界，错误响亮（fail-loud）。
+
+**代价**：整行替换要求覆盖者**重述全部字段**——bundle 作者改一行，所有覆盖这一行的 profile 都要跟着重述（上游把它写进 Known Limitations：这是用啰嗦换确定性）；来源链与平台门控也要求读者理解层栈模型，第一次读 `--dump-config` 输出需要 L00 的地图。
 
 ## 证据边界
 

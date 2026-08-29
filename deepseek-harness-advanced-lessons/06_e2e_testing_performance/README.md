@@ -39,13 +39,15 @@ grep -n "DSH_SNAPSHOT\|replay" .github/workflows/ci.yml | head -5
 grep -n "DEEPSEEK_API_KEY\|preflight" .github/workflows/e2e.yml | head -5
 ```
 
-## 设计思想
+## 这样决策买到了什么，付出什么
 
 1. **先声明每条 lane 不能证明什么**。"能证明什么"人人会写；"绝不证明什么"才是分层的护栏——结论分栏，永不混报。
 2. **CI 只读基准**：回放纪律让"基准漂移"只能是显式的人类决定。
 3. **覆盖门是删除死代码的工具**，不是炫耀数字：100% per-file 的理由写在文档里。
 4. **真实资源不配给、但要防假绿**：有 key 就尽量测，无 key 时 preflight 硬失败而不是静默 skip。
 5. **从发布形态测发布入口**：built-artifact smoke 把"源码能跑"与"产物能跑"分开。
+
+**代价**：五条 lane 的维护成本是真实的——录制基准要人手更新、双侧 snapshot 同步拖慢 agent loop 的改动速度、real-API e2e 的费用与不稳定性都要专门治理（preflight 与跳过策略本身就是为此长的）；"结论分栏"也要求读 CI 的人受过训练，知道每盏绿灯证明的是哪一栏。
 
 ## 证据边界
 

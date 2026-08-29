@@ -4,9 +4,31 @@
 
 Agent 接口与默认实现是拆开的：`packages/core/agent` 拥有 `Agent` 接口、registry、inbox 和 live `agent/*` 事件；`packages/core/agent-loop` 的 `ReactLoopAgent` 是默认 driver。接口与实现分离意味着整个循环可被替换（L07/L11 会用到这一点）。
 
+## 常规做法会怎么坏：调用方直接发起请求的三种事故
+
+几乎每个 agent 项目的第一版都是这样：
+
+```ts
+// 常规做法：每个入口各自发起一次模型请求，共享一个 history
+async function chat(prompt: string) {
+  history.push({ role: 'user', content: prompt })
+  const reply = await model.chat(history)
+  history.push(reply)
+  return reply.text
+}
+```
+
+demo 阶段它工作。下面三个场景会让它陆续坏掉——注意 dsh 为**每一个**都写了专门的机制与测试：
+
+1. **流式输出中用户又发了一条消息。** 第二次 `chat()` 与第一次并发写同一个 `history`，交错顺序取决于事件循环的偶然；用户取消第一条时，第二条的消息已经混进被取消的请求——"取消"再也切不出干净的历史。dsh 的解法是把"输入到达"与"请求发起"解耦：一切输入先入 inbox，只有 loop 自己在 step 边界 claim（精读一）；abort 窗口内到达的唤醒输入被 `wakingAfterAbort` 重分类到下一个 turn——输入既不丢失，也不会误归属进已经作废的请求。
+2. **进程重启，"没来得及跑的输入"在哪？** 常规做法里它在某个调用方的内存里，进程死了就没了，你甚至无法区分"没收到"与"收到没跑"。dsh 的 inbox 是 durable 状态：每次 splice 先落 `agent/inbox/spliced` 事件再改内存——resume 之后待办输入还在，"跑过的工作"与"丢弃的未跑工作"有账可查。
+3. **文件 watcher 想给模型注入一条环境变更。** 常规做法是往 `history` 塞一条"系统消息"——它没有可追溯的来源（违反 L04 的 model-visible means logged），也没有自然的注入时机（现在注入会打断流中的请求）。dsh 给了第三种输入语义 `inject()`：入队但不唤醒，等下一次 claim 顺路带走。
+
+一句话：**输入的准入、排序、归属是 agent 系统里最容易做错的决策。dsh 把它们全部收进一个 6 行的 `claim()`，让每个调用方只剩"选哪种语义"一个问题。**
+
 ## 阅读地图
 
-1. `packages/core/agent/src/inbox.ts` —— 两个队列与 claim 纪律
+1. `packages/core/agent/src/inbox.ts` —— 两个队列与 claim 纪律（先回答上面三个场景怎么解）
 2. `packages/core/agent/src/runtime-types.ts` —— live 事件词汇表与三种输入语义
 3. `packages/core/agent-loop/src/agent.ts` —— turn/step 状态机（本课主菜）
 4. `packages/core/agent-loop/src/tool-calls.ts` —— 工具调度的有序提交（L06 展开，这里只看接口）
@@ -66,12 +88,14 @@ grep -rn "wakingAfterAbort\|reclassif" packages/core/agent-loop/tests/*.spec.ts 
 
 可选（需 `pnpm install`）：`pnpm vitest run packages/core/agent-loop --reporter=dot`。
 
-## 设计思想
+## 这样设计买到了什么，付出什么
 
-1. **两个队列胜过一个优先级队列**。`next-turn` 是"每个 prompt 独享一个 turn"的 FIFO，`next-step` 是"凑批进同一 step"的批队列——注入式上下文（不唤醒）与对话式输入（独占 turn）在类型上就分开，而不是靠优先级数字。
-2. **配平纪律**：每个已开始的 turn/step 在所有路径（正常、取消、崩溃）上都有闭合事件；每个 `tool/call` 都有配对 `tool/result`。日志永远 provider-legal。
-3. **数据决定论**：扩展点表达意愿的方式是写数据，机器重读数据裁决——监听顺序不可能改变结果。
-4. **durable 状态先行**：inbox 的每次变更先入日志再改投影，重启后"欠着的输入"与"丢弃的工作"都有账可查。
+1. **三种输入语义在选 API 时就确定**——followup 独占 turn、steer 在 step 边界汇入、inject 静默排队。常规做法里这些是"参数表之外的隐藏行为"，在这里是类型与队列路由的必然结果，文档只需要解释、不需要防错。
+2. **取消是干净且可证明的**——abort 窗口的输入被重分类而非丢弃；`cancel.spec.ts` 的用例名直接断言取消后 replay 仍然配平（grep "balances replay"）。"取消后历史脏掉"这个 bug 品类结构性不存在。
+3. **崩溃后账目可查**——inbox 变更先入日志、turn/step 每条退出路径都落闭合事件；这是 L04 的 THEOREM（每个请求可从日志 byte-equal 重建）能成立的前置条件之一。
+4. **插件能参与输入裁决但破坏不了它**——`agent/pre-step` 可以 reject/改写，但 `claim` 本身 `@internal`：扩展点的自由度是圈出来的，不是泄漏出来的。
+
+**代价**：所有输入都要过队列，"立刻看到模型开始回答"多了一跳；idle/maintenance/running 状态机与配平纪律是真实复杂度，写替代 driver 的人必须全部理解——所以接口与默认实现分离，替换循环是受控的重武器而不是日常操作。
 
 ## 证据边界
 

@@ -1,17 +1,35 @@
-# L01：Cordis——插件、服务与可逆生命周期
+# L01：Cordis——插件、可逆生命周期与"没有全局状态"
 
 > 本课问题：为什么「一切皆插件」不等于全局回调集合？插件怎样做到可装卸、可依赖等待、可 HMR？
 
-"Everything is a plugin" 这句话谁都会说，难点在让它在工程上成立：插件要能按任意顺序加载、能依赖别人提供的服务、能被卸载且**不留任何垃圾**、能在依赖变化时自动重载。Cordis（`vendor/cordis/src/`）用四个概念解决：**Context（作用域）、Service（服务）、typed events（事件）、Fiber（可逆生命周期）**。
+"Everything is a plugin" 这句话谁都会说，难点在让它在工程上成立。Cordis（`vendor/cordis/src/`）用四个概念解决：**Context（作用域）、Service（服务）、typed events（事件）、Fiber（可逆生命周期）**。
+
+## 常规做法会怎么坏：全局注册表的三种死法
+
+几乎所有插件系统的第一版都是这样：
+
+```ts
+// 常规做法：全局注册表 + 回调集合
+const handlers = new Map<string, Handler>()
+export function registerTool(name: string, fn: Handler) {
+  handlers.set(name, fn)          // 谁注册的？怎么撤销？
+}
+```
+
+demo 阶段它工作。但"一切皆插件"意味着**模型适配器、工具、日志、循环本身**都要走这条路，于是三个坏情况迟早发生——dsh 为每一个都写了机制或测试：
+
+1. **卸载与热重载留下垃圾。** 插件 A 注册了一个事件监听然后被禁用——`handlers` 里的条目还在，事件被处理两次，或者引用泄漏让进程慢慢膨胀。开发期 HMR 每保存一次文件就泄漏一批，几小时后系统不可用。Cordis 的回答是**注册即效应**：每个注册自动携带归属者与反序清理函数，卸载时框架代为回卷；"装卸 N 次后注册数回到基线"是上游测试的常规断言。
+2. **依赖服务就绪的竞态。** 插件要用 `ctx.llm`，但 llm 插件还在加载——常规做法是 `setTimeout` 轮询或手工安排加载顺序，顺序成了隐藏的全局知识。Cordis 的回答是声明式 `inject` + epoch 重算：依赖集合一变，受影响的插件被可逆地重载，等待中的行有名字的诊断（`name: pending (waiting for services: X)`，见 L02）。
+3. **归属不明导致"不敢卸载"。** 回答不了"这个注册是谁做的、谁负责撤销"，就永远不敢真的卸载任何东西——系统只增不减，"可替换"沦为口号。Proxy 化的 Context 让每次属性访问都带着 fiber 上下文，归属问题在机制层面有答案。
 
 ## 阅读地图
 
 按顺序读，每个文件带着下面的问题读：
 
-1. `vendor/cordis/src/context.ts` —— Context 到底是个什么对象？
+1. `vendor/cordis/src/context.ts` —— Context 到底是个什么对象？为什么是 Proxy 而不是继承体系？
 2. `vendor/cordis/src/service.ts` —— 服务怎么声明、怎么注册？
-3. `vendor/cordis/src/events.ts` —— 五种事件分发方式的差别？
-4. `vendor/cordis/src/fiber.ts` —— 插件应用的"可逆运行时"是什么？
+3. `vendor/cordis/src/events.ts` —— 五种事件分发方式的差别？waterfall 的否决权意味着什么？
+4. `vendor/cordis/src/fiber.ts` —— 插件应用的"可逆运行时"是什么？epoch 怎么重算？
 5. `vendor/cordis/src/reflect.ts` —— 服务查找与依赖通知怎么实现？
 
 ## 精读一：Context 是 Proxy，不是继承体系
@@ -24,7 +42,7 @@ const self = new Proxy<this>(this, ReflectService.handler)
 
 `new Context()` 返回的不是裸 this，而是一个代理：读 `ctx.xxx` 时沿 fiber 链向上找服务（`reflect.ts` 的属性拦截），找不到但声明过 inject 就抛错——错误原文在 `reflect.ts` 里搜 `cannot get required service`。类型面靠 declaration merging 扩展（`declare module './context.ts' { interface Context ... }`），业务包给自己的服务加类型，不改框架文件。
 
-**设计决策**：为什么不做成"BasePlugin 类 + this.app 全局对象"？因为全局对象没有归属：你无法回答"这个注册是谁做的、谁负责撤销"。Proxy 方案让每次属性访问都带着 fiber 上下文，服务查找自然带作用域。
+**为什么不做成"BasePlugin 类 + this.app 全局对象"？** 因为全局对象没有归属：你无法回答"这个注册是谁做的、谁负责撤销"。Proxy 方案让每次属性访问都带着 fiber 上下文，服务查找自然带作用域。
 
 ## 精读二：注册是 effect，卸载自动回卷
 
@@ -51,12 +69,14 @@ grep -n "_refresh\|_setEpoch" vendor/cordis/src/fiber.ts
 
 可选（需要 `pnpm install`）：`pnpm vitest run vendor/cordis --reporter=dot`，看 Cordis 的测试全绿需要多久。
 
-## 设计思想
+## 这样设计买到了什么，付出什么
 
-1. **注册即效应，不是全局副作用**。每个注册都有归属者与反序 disposer——这是"一切皆插件"能成立的前提，也是 HMR、profile 热重载、服务热插拔的正确 teardown 的来源。
-2. **依赖等待是声明式的**。`inject` 声明 + epoch 重算让"等服务"变成框架职责；未声明就读服务直接抛错，隐式全局单例从类型层面被挤掉。
-3. **可逆性是组合性的另一半**。能装不能卸的插件系统会在 HMR 与配置热重载下泄漏到不可用；"重复装卸后注册数回到基线"是上游测试的常规断言。
-4. **扩展点是带否决权的有序链（waterfall）**，不是无序回调集合——顺序与委托让"拦截并改写"成为一等能力。
+1. **热重载与配置切换是安全的**——上面第 1 种死法（泄漏/双处理）被"注册即效应"结构性消灭，这是 profile 热重载、preset 组合（课程十三 A03）、HMR 能存在的前提。
+2. **插件可以按任意顺序加载**——依赖等待是框架职责（inject + epoch），配置里写不出"加载顺序"，也就写不出顺序耦合（L02 的"行顺序无语义"直接依赖这一点）。
+3. **per-agent 隔离成为可能**——每个 Agent 有自己的 `agent.ctx` 作用域，两个 agent 看到不同工具集、不同 provider，靠的就是"注册带归属、卸载会回卷"（L07 展开）。
+4. **扩展点有否决权**——waterfall 让插件可以拦截并改写而不需要修改循环代码，这是 L03 的 `pre-step`、L06 的工具管线的地基。
+
+**代价**：`ctx.xxx` 的属性访问是 Proxy 拦截，调试栈更深、心智模型不再是朴素 JS；服务是异步就绪的，写插件必须接受"依赖可能迟到"；对只要写一个工具的 casual 贡献者，这些概念是真实的入门成本——上游用 cookbook 与 declaration merging 的类型提示来摊薄它。
 
 ## 证据边界
 

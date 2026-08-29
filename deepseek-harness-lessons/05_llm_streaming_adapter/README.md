@@ -4,6 +4,15 @@
 
 `packages/llm/llm` 定义中立词汇与 adapter 缝隙；`packages/llm/llm-deepseek` 是直连 DeepSeek API 的真实 adapter。对比读这两个包是理解"缝隙设计"的最好练习。
 
+## 常规做法会怎么坏：直接 import 模型 SDK 的四种代价
+
+常规做法是在 agent 循环里直接 `import { OpenAI } from 'openai'`，把 SDK 返回的 delta 结构 spread 进自己的消息类型。它的代价随时间利滚利：
+
+1. **换/加 provider = 改循环。** 每家的 chunk 形状、finish 语义、usage 口径都不同，循环里每处 `for await` 都要知道"现在是哪家"。dsh 把 adapter 的必选接口压到**一个方法**（`stream()`），加 provider 是加一个包——快照里 `llm-pi-ai` 就是这么长出来的，循环零改动。
+2. **流中途抛异常，半截输出无法入账。** async iterable 中途 throw，已消费的 chunk 与"最终发生了什么"永远对不上——L03 辛苦建立的配平纪律直接作废。dsh 的回答：**错误折叠成恰好一个 terminal `finish` chunk**（精读三），流永远"正常结束"，只是结束块携带失败事实。
+3. **错误分类散落各处。** "上下文超限"每家措辞不同，常规做法是到处 `if (e.message.includes('context'))`——换一家全断。dsh 把分类集中到唯一 code，外部纪律是 "route on this, never by parsing `message`"。
+4. **每个 adapter 自己拼 message，组装必然分歧。** dsh 让全系统只有**一份**组装算法（`BlockAssembler`），实时与重放共享它。
+
 ## 阅读地图
 
 1. `packages/llm/llm/src/index.ts` —— `LlmAdapter`、`LlmRuntime`、`prepareCall`
@@ -12,7 +21,7 @@
 4. `packages/llm/llm-deepseek/src/adapter.ts` / `translate.ts` / `sse.ts` —— 真实 provider 侧
 5. `packages/llm/llm/src/adapter-failure.ts` / `error.ts` / `retry-policy.ts` —— 错误规范化
 
-## 精读一：Adapter 只有 транспорт 职责
+## 精读一：Adapter 只有传输职责
 
 adapter 的全部必选接口是一个方法（`index.ts` 搜 `abstract class LlmAdapter`）：
 
@@ -56,12 +65,14 @@ grep -n "straggler\|max-tokens\|tool-call" packages/llm/llm/tests/assembler.spec
 sed -n '1,40p' packages/llm/llm/tests/adapter-failure.spec.ts
 ```
 
-## 设计思想
+## 这样设计买到了什么，付出什么
 
-1. **缝隙最小化**：adapter 必须实现的只有一个方法；中立词汇表本身 merge-extensible（插件可加块类型），加 provider 不改核心。
-2. **过程与事实分离**：chunk 是过程（可整流写日志做回放），message 是冻结事实（带稳定 id 与出处）；两者由唯一组装器连接。
-3. **错误即事件**：恰好一个 terminal finish 携带冻结事实；分类集中、route on code；重试是独立插件的可选层。
-4. **一次调用一个自洽世界**：配置代际快照 + 一次性 prepared call，配置变更只影响下一次调用——这是 provider 端 prompt cache 可用的前提。
+1. **加一个 provider 是加一个包，不是一次重构**——必选接口一个方法，中立词汇表本身 merge-extensible。快照内 deepseek 直连与 pi-ai SDK 两个 adapter 共存就是证据。
+2. **日志配平在流式世界里依然成立**——错误折叠为 terminal finish（精读三），L03 的"每条流都有闭合事件"在 provider 抖动、网络截断、用户取消三种情况下都不破。
+3. **截断的安全决策只做一次**——"max-tokens 时丢弃全部 tool-call 块"这个攸关安全的判断只在组装器里存在一次，任何 adapter 都绕不过。
+4. **实时与重放天然对账**——token-meter 重放日志求 usage 用同一个 `BlockAssembler`，"实时计的账"与"事后对的账"是同一算法，分歧这个 bug 品类不存在。
+
+**代价**：中立 chunk 词汇表是一层真实抽象——provider 出了非常规的新块类型（如新的推理/多模态块）要先扩展协议再写 adapter，比直接用官方 SDK 类型多一步；thunk 化配置与一次性 prepared call 也比"全局 client 单例"多一些仪式感——换来的是配置热切换不撕裂在飞请求。
 
 > 演进注脚：本快照（rc.5）的组装器在 max-tokens 丢块时尚不同步剪裁 replay 元数据；rc.7 引入 `assembled()` 统一决策让两者不可能不一致——课程十三 L07 会把它当作真实演进的案例。
 

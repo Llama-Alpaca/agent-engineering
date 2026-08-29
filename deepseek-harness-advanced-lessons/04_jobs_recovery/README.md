@@ -51,12 +51,14 @@ grep -n "records die with the harness process" packages/jobs/jobs-local/README.m
 grep -n "containment rather than a security boundary" packages/workflow/workflow-worker-thread/src/index.ts
 ```
 
-## 设计思想
+## 这样决策买到了什么，付出什么
 
 1. **授权优于保密**：可预测标识 + 身份校验 > 不可猜令牌；把"猜 id"从攻击面移除靠的是校验，不是隐藏。
 2. **结算一次、落账先行、完成最后**：三层顺序各防一种竞态（覆盖、幻读、乱序观察）。
 3. **易失性写进文档，durable 留成 seam**：不伪装、不半吊子补层——"进程内"是明示的当前事实。
 4. **遏制与安全是两种边界**：能终止 ≠ 能对抗；声明清楚，消费者才不会把 worker 当沙箱用。
+
+**代价**：`<kind>-N` 的可预测 id 意味着**每个**访问路径都必须过 `assertAccess`——漏一处校验就是漏洞，这个纪律没有类型系统兜底（不像 A05 的闭联归一）；"重启即失"虽然诚实，但把"要不要 durable"的工程决策推给了每个使用者，seam 至今没有人填。
 
 ## 证据边界
 

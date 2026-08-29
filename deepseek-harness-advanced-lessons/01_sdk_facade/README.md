@@ -51,12 +51,14 @@ sed -n '/while (true)/,/^  }/p' packages/sdk/client/src/api.ts | head -20
 grep -n "_is_inbox_receipt" -A 6 python/sdk/src/deepseek_harness/api.py
 ```
 
-## 设计思想
+## 这样决策买到了什么，付出什么
 
 1. **Receipt, not result**：分布式边界上，"收到什么"（同步可答）与"发生了什么"（需要区间与归因）是两个问题；只回答第一个，把第二个交给持有日志的消费者。
 2. **归因端点必须是持久事实**：inbox 收据与 idle 信号都来自日志，而不是服务器内存里的"当前请求"指针——客户端重连、换进程、换语言都能重建同样的归因。
 3. **不提供的能力也要诚实声明**：wire-level cancel 不存在这件事写在类注释里，而不是留给用户在事故里发现。
 4. **协议由两份独立实现共同约束**：TS 与 Python 客户端是彼此的合规测试。
+
+**代价**：归因的复杂度没有消失，只是移到了客户端——`isInboxReceipt` 的等待循环、`session.status: idle` 的判定都得每个客户端各写一遍（上游用双侧 snapshot 测试压住漂移）；"服务器不回答结果"也意味着简单脚本不能一行 `await prompt()` 拿答案，要先学会消费事件流。
 
 ## 证据边界
 

@@ -4,6 +4,15 @@
 
 三种"把工作移出当前对话"的机制，三种不同的所有权与持久性边界。读完本课你应该能在拿到需求时回答"该用哪种"。
 
+## 常规做法会怎么坏：把"移出对话"当成一件事来写
+
+常规做法里这些需求会长成同一种代码：子任务 = 递归调用自己，后台任务 = 一个内存 Map 加 `setInterval`。四个场景暴露它的问题——dsh 的答案全部有源码或文档背书：
+
+1. **agent 生 agent 失控。** 递归没有预算，子代理再开子代理直到资源耗尽。dsh 在 durable 元数据里放 `delegationDepth`（递归预算，注释明说 "durable: must survive persistence and resume"），并在提示词层面告知子代理"你的权限域封死、不能内部扩权"（`SUBAGENT_DELEGATION_CONTEXT`）。
+2. **"从中间分叉一个会话"。** 常规做法任意位置复制数组——但进行中的 turn 不配平、不可重放（L04）。dsh 的 fork 只取 `completedTurnPrefix`（到最后一个 `turn/end` 的平衡前缀）：**数据结构的可重放性反过来决定了 API 的形状**。
+3. **重启后后台任务全丢，UI 却假装还在。** dsh 的选择是把丢失写成文档（`jobs-local` README：jobs 是 process-local 的，durable 是 seam 预留的扩展位）——易失性是声明的，不是伪装的。
+4. **靠藏 id 保护后台任务。** 可预测的 id 被当成漏洞去"修复"（换 UUID），dsh 的立场写在注释里："Ids are predictable, so **authorization — not secrecy** — is the boundary"——校验 owner 身份，而不是隐藏标识。
+
 ## 阅读地图
 
 1. `docs/subsystems/subagent.md` —— 官方定位与对比表
@@ -60,12 +69,14 @@ grep -n "belongs to another session\|first\|process-local" packages/jobs/jobs-lo
 grep -n "containment rather than a security boundary\|maxTotalAgents\|TERMINATE" packages/workflow/workflow-worker-thread/src/index.ts | head
 ```
 
-## 设计思想
+## 这样设计买到了什么，付出什么
 
-1. **起点决定语义**：spawn（干净房间）与 fork（平衡前缀）不是性能选项，是语义选项；fork 的边界由日志可重放性反过来决定——数据结构约束了 API 的形状。
-2. **授权而非保密**：可预测 id + owner fence；把"猜 id"从攻击面里去掉的方法不是隐藏 id，是校验身份。
-3. **易失性要声明，不要伪装**：jobs 与 workflow 的 README 都把"重启即失"写成 Known Limitations；durable 留作 seam 扩展位。
-4. **遏制与安全是两回事**：worker thread 能终止失控代码，不能对抗恶意代码——声明清楚，消费者才不会错用。
+1. **"用哪种机制"变成有据可查的选型**——上表四行（durable？谁能动？崩溃后？边界性质？）就是决策检查表；常规做法里三种需求长成同一种代码，边界问题到事故时才暴露。
+2. **失控在结构上有顶**——delegationDepth 预算 + 权限域封死的提示词声明 + workflow 的并发/总数/超时限额：递归失控这个 agent 系统经典事故被多层封顶。
+3. **重启后"丢什么"是明示的**——子会话可恢复、jobs 记录消失（写进 README）、workflow run 消失但各 agent 日志仍在。消费者可以据此选择机制，而不是事后发现。
+4. **授权边界不怕标识泄漏**——id 出现在日志、崩溃报告、客户端缓存都没关系，因为边界是服务端身份校验，不是猜不到的 token。
+
+**代价**：想要 durable 的后台任务就得自己实现 `JobRegistry` seam（上游尚未提供——这是声明过的缺口，不是隐藏的）；三种机制并存也意味着调用方必须理解它们的边界差异，上游用文档与命名（`-in-process`、`jobs-local`）持续提醒。
 
 ## 证据边界
 

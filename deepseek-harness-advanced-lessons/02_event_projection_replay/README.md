@@ -41,12 +41,14 @@ grep -rn "higher-seq-wins" packages/client/runtime/tests/*.spec.ts | head -3
 sed -n '1,30p' packages/session/session-projection/src/index.ts
 ```
 
-## 设计思想
+## 这样决策买到了什么，付出什么
 
 1. **按数据生命周期分层，而不是按"谁更强"分层**：无限事实流 / 小状态现状 / 纯视图，各自找拥有者。
 2. **单调 seq 是最便宜的并发协议**：客户端不理解投影语义也能正确合并——收一个单调序数，比实现任何 CRDT 都便宜。
 3. **乐观更新与服务器真相共用一条规则**：没有"待确认"状态机，同一 seq 自然幂等。
 4. **推导权唯一**：从日志算投影只发生在 host 一处；客户端只消费结果，两语言客户端不产生分歧。
+
+**代价**：三份代码（host 投影、客户端 store、窗口组装）各要有家——新增一种投影要同时动 `SessionProjectionMap` 注册与消费侧；higher-seq-wins 也把"乱序到达"简化成了"旧帧静默丢弃"，调试时需要意识到这是设计而不是丢消息的 bug。
 
 ## 证据边界
 

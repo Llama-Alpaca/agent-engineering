@@ -331,7 +331,7 @@ The first seven courses grew research-assistant into a deep agent that **thinks*
 
 ## Course 12: DeepSeek Harness Source Reading — Architecture & Design Ideas (12 lessons)
 
-> Redefined in 2026-08: this is now a **guided source-reading course**, not a simulator course. It pins DeepSeek Harness at commit `47f943859bef60e4160492346772ded9b24f765a`; every lesson opens with a design question (why is "everything is a plugin" not a global callback set? why do patches replace whole rows instead of deep-merging?), walks a reading map through the real files, quotes cited source, analyzes the decision (problem → alternatives → trade-off), and distills transferable design ideas. Each lesson keeps an `anchors.json` of every path/symbol/comment it cites; `code.ts` is an anchor checker — without a local checkout it validates course-material consistency, with one it re-verifies every anchor against the real source, so upstream drift fails loudly instead of aging silently.
+> Redefined in 2026-08: this is now a **guided source-reading course**, not a simulator course. It pins DeepSeek Harness at commit `47f943859bef60e4160492346772ded9b24f765a`. The course opens with a system-level causal spine (every pillar of an agent product changes weekly → "whatever changes is a plugin" → the four engineering problems that follow, and how each is solved), and every lesson follows the same rhythm: **show the conventional design and exactly how it breaks → read dsh's mechanism in the real source → state concretely what the design buys and what it costs** — every claim pinned to real source, a test name, or a comment, never hand-waving. Each lesson keeps an `anchors.json` of every path/symbol/comment it cites; `code.ts` is an anchor checker — without a local checkout it validates course-material consistency, with one it re-verifies every anchor against the real source, so upstream drift fails loudly instead of aging silently.
 
 | # | Lesson | Design question |
 |---:|---|---|
@@ -352,7 +352,7 @@ The first seven courses grew research-assistant into a deep agent that **thinks*
 
 ## Course 13: DeepSeek Harness Design-Decision Case Studies (8 lessons)
 
-> Also redefined in 2026-08: eight **decision case studies** pinned at `99f6f02fecdb7dff40c3fbc9470f5907c29f74ca` (rc.7). Each case answers "what was the problem, what were the alternatives, what was chosen, what did it cost" — and validates the decision against the real evolution `47f9438 (rc.5) → 99f6f02 (rc.7) → master`. Shares the study tooling and method with Course 12.
+> Also redefined in 2026-08: eight **decision case studies** pinned at `99f6f02fecdb7dff40c3fbc9470f5907c29f74ca` (rc.7). The eight cases share one methodology: **admit a bad situation that cannot be eliminated (cancel races, process death, unanswered approvals, cross-client concurrency) → among wounded options pick the one whose harm is reversible → read the justification out of source comments, test names, and Known Limitations** — then validate each decision against the real evolution `47f9438 (rc.5) → 99f6f02 (rc.7) → master`. Shares the study tooling and method with Course 12.
 
 | # | Case study | One-line question |
 |---:|---|---|

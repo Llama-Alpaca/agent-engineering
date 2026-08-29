@@ -48,12 +48,14 @@ grep -n "inactiveRows\|leakedServices" packages/preset/agent-presets/src/mount.t
 grep -n "never a persistence target" -B2 -A4 packages/preset/agent-presets/src/mount.ts
 ```
 
-## 设计思想
+## 这样决策买到了什么，付出什么
 
-1. **日志约束 API 的形状**：哪些操作允许，由"日志还能不能重放与解释"反推——recompose 的限制不是产品偏 好，是事件溯源的数学后果。
+1. **日志约束 API 的形状**：哪些操作允许，由"日志还能不能重放与解释"反推——recompose 的限制不是产品偏好，是事件溯源的数学后果。
 2. **事务的两种形态**：创建即事务（挂载失败整树回滚，没有半组合状态）；交换即重挂（父链接 rebind，不经过"先拆后装"的中间态）。
 3. **共享要跨代一致**：standing mount + generation 让"同名 preset"在全进程内是同一个对象；代际切换只影响新会话。
 4. **id 是安全边界不是风格**：命名规则的理由写成注释，防止后人"放松"成 cosmetic 校验。
+
+**代价**：已经在产出的会话不能换组合——用户想中途换工具集，得到的答案是"开新会话"（体验上的直接损失，上游用"日志可解释性"为它辩护）；standing mount 的旧代不 dispose 也留了已知 TODO——generation 机制的完整性还在路上。
 
 ## 证据边界
 

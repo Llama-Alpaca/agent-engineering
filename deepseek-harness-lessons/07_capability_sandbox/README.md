@@ -4,6 +4,14 @@
 
 L06 讲了单个工具调用怎么过管线；本课讲能力（capability）怎么组织，才能让"换执行环境"变成一次配置改动。
 
+## 常规做法会怎么坏：工具直接碰操作系统的三种结局
+
+常规做法里，bash 工具直接 `child_process.exec`，文件工具直接 `import fs`。第一天没问题，然后：
+
+1. **要上沙箱了。** 每个工具里都埋着系统调用——你要么逐个改（fork 地狱），要么养一套"沙箱版工具包"双轨并行，行为分叉。dsh 的回答：工具（Consumer）只依赖 `ctx.fs`、`ctx.shell` 这类**接口**，实现（Provider）在组合处替换——`dsh-fs-local` 换成 `dsh-fs-sandbox` 是一行配置，工具零改动。
+2. **两个执行器圈了不同的地。** bash 按一份可写根列表圈地、fs 按另一份——模型很快学会从缝隙绕过（用 bash 写 fs 不许写的路径）。dsh 让 bash-sandbox 与 fs-sandbox 从**同一个** `writableRoots` 函数解析可写根——"so bash and fs cannot drift"；策略只有一家（`sandbox-policy`），每个消费者读同一份 `resolve()` 结果。
+3. **"本地到底有没有隔离"没人说得清。** 进程内的路径检查被当成安全边界，直到被人绕过。dsh 的回答是**让每层自报真实强度**：fs 侧围栏头注释自我声明 "NOT a kernel boundary"；native 侧 `enforcement: 'full' | 'partial'` 由后端自报；后端不可用直接 `SANDBOX_UNAVAILABLE` 拒跑——宁可拒绝，不静默穿透。
+
 ## 阅读地图
 
 1. `docs/capability-seams.md` —— 能力图谱：先建立全局感
@@ -59,12 +67,14 @@ grep -n "NOT a kernel boundary\|cannot drift\|refusing to run" packages/fs/fs-sa
 grep -rn "approval/asked\|approval/decided" packages/interaction/user-approval/tests/*.spec.ts | head -5
 ```
 
-## 设计思想
+## 这样设计买到了什么，付出什么
 
-1. **缝隙三角色齐备才算能力**：只有接口没有 provider 是空谈，只有 provider 没有 consumer 是死代码；"加一个能力"意味着设计三份东西（Definition/Provider/Consumer）。
-2. **能力事实要诚实**：`enforcement: 'partial'`、进程内围栏自declare"containment not a security boundary"、`SANDBOX_UNAVAILABLE` fail-closed——系统不假装有它没有的隔离强度。
-3. **策略集中、单一解析点**：所有消费者读同一份 resolved policy，两个执行器圈出不同根这个 bug 品类被结构性消灭。
-4. **审批默认关闭、审计成对**：fail-closed 的兜底 + 每问必有一对 durable 事件，事后可审计。
+1. **换执行环境 = 一处组合改动。** 本地 → Landlock/Seatbelt → E2B 远程，工具代码与 agent 循环都不动；而且 fs/subprocess/shell 一起搬进同一个执行世界（e2b 的单 handle 组合），不存在"文件在远端、shell 在本地"的撕裂。
+2. **围栏没有缝隙**——所有消费者读同一份 resolved policy、同一个 `writableRoots`："两个执行器圈不同的地"这个 bug 品类被结构性消灭，模型无从利用不一致。
+3. **每层只声称真实拥有的强度**——`partial`、方言化拒绝、`NOT a kernel boundary`、`SANDBOX_UNAVAILABLE`：上层（以及运维者）能据此做正确的安全决策，而不是被虚假的安全感骗。这是"诚实的能力事实"作为设计纪律，不只是美德。
+4. **审批默认关闭、审计成对**——无人应答即拒绝；每次问询在日志里成对出现，事后可审计。
+
+**代价**："加一个能力"意味着设计三份东西（Definition/Provider/Consumer），比直接写一个函数慢；隔离强度分层（policy fence / native sandbox / 远端世界）要求使用者理解"哪层防什么"；诚实字段也把"partial 到底缺什么"的判断责任交给了上层调用者。
 
 ## 证据边界
 

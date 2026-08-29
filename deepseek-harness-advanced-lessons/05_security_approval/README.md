@@ -61,13 +61,15 @@ grep -n "refusing to run the command unconfined" packages/sandbox/sandbox/src/in
 grep -n "permission/preset" packages/interaction/permission-presets/src/index.ts | head -3
 ```
 
-## 设计思想
+## 这样决策买到了什么，付出什么
 
 1. **Fail-closed 靠归一实现**：把"没有应答、应答抛错、应答超纲"三种异构失败折叠成同一个封闭结果——调用方的 closed-union switch 永远不会遇到未知值。
 2. **缝隙遏制自己的回调**：审批 UI 的崩溃是审批的问题，不是被审批工具的通行证。
 3. **审计与决策原子**：没有成对日志的决策在协议上不存在。
 4. **每层只声明真实强度**：partial、方言化拒绝、unavailable——诚实的能力事实让上层能做正确的安全决策。
 5. **UX 便利不产生第二套真相**：预设是旋钮组合的快捷方式，执行永远读旋钮。
+
+**代价**：fail-closed 意味着无人值守的自动化（CI、跑批）会在第一个需要审批的调用上停死——上游宁可你显式选 `permission-presets`，也不默默放行；成对审计把"问一次审批"变成至少两条 durable 事件 + 前置条件检查，交互延迟与日志量都是真实开销，换来的是事后可审计。
 
 ## 证据边界
 

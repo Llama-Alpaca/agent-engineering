@@ -4,6 +4,15 @@
 
 工具不是 `call(function)`。`packages/core/tools` 的 `ToolRuntime` 把一次调用拆成一条流水线，每个阶段都有明确的可变权限；`agent-loop/tool-calls.ts` 负责调度与提交。`docs/tool-execution-pipeline.md` 的 mermaid 图是本课的地图。
 
+## 常规做法会怎么坏：`async function` 工具的四种事故
+
+常规做法里工具就是一个 async 函数，循环里 `await Promise.all(calls.map(c => tools[c.name](c.args)))`，结果直接 append 进历史。四个场景会把它压垮：
+
+1. **想加审批、策略、审计、沙箱。** 常规做法只能在每处调用点 if/else——顺序敏感、可以绕过、每个新关注点再抄一遍。dsh 的回答是一条五阶段管线：审批/策略/观测都是挂在固定阶段的 listener，工具作者与循环都不用知道彼此（精读二）。
+2. **并发执行，完成序 ≠ 模型看到的顺序。** `Promise.all` 谁先完成谁先写历史——下一请求的历史顺序与模型发出调用时的顺序不一致，微妙且不可复现。dsh 的 `commitReady` 只沿连续的 model-order slot 提交：并发是吞吐问题，有序是语义问题，分开解决。
+3. **取消时在飞的调用怎么办。** 等它？杀它丢结果（`tool/call` 没有配对 `tool/result`，replay 非法）？dsh 的纪律：body drain 到静默、未启动的补合成结果、调度器故障"without fabricating results"——取消与故障在日志里是不同的词。
+4. **实现细节漏给模型。** 超时参数、并发标记、presenter 名称混进 tool schema——模型学会引用你打算下周改名的内部字段。dsh 用白名单投影：schema 只发 `name/description/parameters`，其余 "must never reach the model"（有专门测试断言）。
+
 ## 阅读地图
 
 1. `packages/core/tools/src/schema.ts` —— `defineTool`：作者 DSL 与输出契约
@@ -60,12 +69,14 @@ grep -n "never reach the model" packages/core/tools/tests/tools.spec.ts
 
 可选：`pnpm vitest run packages/core/tools packages/core/agent-loop/tests/tool-calls.spec.ts --reporter=dot`。
 
-## 设计思想
+## 这样设计买到了什么，付出什么
 
-1. **waterfall 而非 hook 数组**：每个阶段是可否决的有序链，阶段间由 registry 的归一化边界强制重入不变量——任何一方都绕不过输出契约重验与最终冻结。
-2. **不可翻转的拒绝单独成类**：guard 无 allow 返回值，"listener 顺序翻转权限"这个 bug 品类在类型层面消失。
-3. **value/render 分离**：durable 的是结构化 value；模型、程序、UI 各自投影；post-execute 的替换必须同时重算两种投影。
-4. **并发是吞吐问题，有序是语义问题**：两者分开解决——执行重叠、提交按模型序；取消 drain 不放弃、故障不伪造。
+1. **安全机制"零成本"挂载**——L07 的审批、沙箱策略、成对审计，全部是这条管线上的 listener，不需要任何工具为此改一行。反过来说：如果工具是裸函数，每个安全需求都是一次全仓改造。
+2. **"顺序翻转权限"这个 bug 品类在类型层面消失**——guard 无 allow 返回值：无论多少个策略 listener、什么注册顺序，一次拒绝都不可能被后面的 listener 翻转成允许。
+3. **模型看到的顺序永远合法**——并发完成序与提交序解耦，测试直接以用例名断言（"commits tool/result in model order even when a later call settles first"）；取消/故障的结果语义显式且不同。
+4. **结果可信且可替换**——durable 的是结构化 value，post-execute 可以替换投影但不能伪造契约外结果（token 对账 + 契约重验）。
+
+**代价**：registry 约 2000 行，写"最简单的工具"也要声明输出契约、理解五阶段；wrapper/中间件作者必须吃透"哪些能换、哪些会被熔合回来"的规则——dsh 用 `defineTool` 的 DSL 与文档把日常作者隔离在这些复杂度之外，复杂度只留给扩展 runtime 本身的人。
 
 ## 证据边界
 

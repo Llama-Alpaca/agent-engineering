@@ -4,6 +4,16 @@
 
 这是全课最核心的一节。`packages/core/session` 回答的问题表面上是"怎么存对话"，实际上是"Agent 系统的真相放在哪、怎么让所有消费者各自看到正确的视图"。
 
+## 常规做法会怎么坏：共享 messages 数组的三种崩塌
+
+常规实现是一份可变的 `messages: Message[]`，所有组件对它 push、splice、原地改写。三个场景会先后把它压垮：
+
+1. **上下文太长要压缩。** 常规做法是原地删改数组——但用户已经看过被删掉的原文（UI 回放从此对不上），token 对账再也重放不出"当时的请求"（账目永久失真）。dsh 的回答：压缩是**视图替换**，日志一个字节不动——被 shadow 的原文永远可以从日志找回（精读一/二）。
+2. **想 fork 会话、或崩溃后想恢复。** 两者都需要"**当时模型看到了什么**"。可变数组里这个事实已经被后续修改覆盖，无从重建。dsh 的回答：日志 append-only + `deriveMessages()` 纯函数投影，配一个以 THEOREM 命名的测试——"every request rebuilds byte-equal from the session log alone"。
+3. **进程在 turn 中间崩了。** 数组留下半个 turn、`tool/call` 没有配对的 `tool/result`——把它重放给 provider 是非法请求，恢复代码只能猜。dsh 的回答：`repair.ts` 在 reload 时确定性补齐（合成 `TOOL_OUTCOME_UNKNOWN`、补 `turn/end {kind:'interrupted'}`），失败分类写进数据。
+
+注意这个设计的执法力度：**"model-visible means logged" 不是文档口号，是每个请求都过一遍的运行时断言**（`invariant.ts`）。上面三种崩塌在 dsh 里不是"靠纪律避免"，是"撞上断言即崩"。
+
 ## 阅读地图
 
 1. `packages/core/session/src/types.ts` —— `SessionEventMap`：哪些事实有资格进日志
@@ -62,12 +72,14 @@ grep -n "TOOL_OUTCOME_UNKNOWN\|interrupted" packages/core/session/src/repair.ts 
 
 可选：`pnpm vitest run packages/core/session --reporter=dot`。
 
-## 设计思想
+## 这样设计买到了什么，付出什么
 
-1. **单一 append-only 真相 + 按受众投影**。日志无损，视图（surface / transcript / messages）各取所需；一切压缩、审计、回放、fork 都是日志之上的纯函数，系统因此可解释。
-2. **不变量要有执法者**。"model-visible means logged" 不是文档口号，是每个请求过一遍的运行时断言 + 一个以 THEOREM 命名的测试。
-3. **替换要可追溯**：压缩节点必须携带 `sourceEventSeqs` 完整覆盖被概括的原文——摘要永不脱离出处。
-4. **失败分类写进数据**：`aborted`（live 取消）与 `interrupted`（崩溃恢复）是不同的日志词，下游永远不需要猜测发生了什么。
+1. **四个消费者不再互相伤害**——压缩要省 token、回放要保真、UI 不能丢用户看过的内容、恢复要无损。常规做法里这四个需求在同一个可变数组上互相打架；在这里它们是同一份日志的四个纯函数投影，各自的正确性独立成立。
+2. **fork/resume/审计/transcript 是"免费"的**——因为它们只是重放日志，没有第二套要同步的状态。课程十三 A01 的 SDK receipt 归因、A02 的投影分层，全都站在这块地基上。
+3. **摘要永不脱离出处**——`sourceEventSeqs` 完整覆盖被概括的原文，"压缩摘要幻觉了没发生过的事"可以被机械检查。
+4. **不变量有执法者**——THEOREM 测试 + 每请求运行时断言，把"模型看到的东西可重建"从约定升级为崩溃即报的性质。
+
+**代价**：任何新的模型可见输入都必须设计成新的 session 事件（比"往数组塞一条"多一步真正的设计）；replace 的 provenance 校验与两段式提交是实打实的复杂度；append-only 日志只增不减，长期会话的存储与投影性能要靠 L08 的机制在视图层解决，而不是删日志。
 
 ## 证据边界
 
