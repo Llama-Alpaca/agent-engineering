@@ -1,0 +1,498 @@
+{
+  "course": "deepseek-harness-lessons",
+  "commit": "99f6f02fecdb7dff40c3fbc9470f5907c29f74ca",
+  "anchors": [
+    {
+      "path": "README.md",
+      "contains": "everything is a plugin",
+      "note": "项目自我定位：一切皆插件的 Agent Harness，底座是 Cordis",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "docs/architecture.md",
+      "contains": "There is no privileged core to patch",
+      "note": "扩展方式：把插件挂到别的插件旁边；注册是可随卸载回卷的效应",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "docs/architecture.md",
+      "contains": "Where new behavior goes",
+      "note": "「新行为放哪」总表——整门课的出口检查表，也是 L11 毕业项目的验收依据",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "apps/cli/src/bin.ts",
+      "symbol": "parseDshArgs",
+      "note": "launcher 只解析自己拥有的 flag，其余原样透传给内层 app",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "apps/cli/src/profile-boot.ts",
+      "symbol": "PROFILE_ROOT_CONFIG",
+      "note": "每次启动重写的空根配置：插件树 = 空树 + patch 层栈，不是一份大配置",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "docs/module-graph.md",
+      "contains": "mermaid",
+      "note": "生成式模块图：图由脚本从源码生成，读图定位包再进源码",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "vendor/cordis/src/context.ts",
+      "symbol": "new Proxy<this>(this, ReflectService.handler)",
+      "note": "Context 是代理不是继承体系：属性访问沿 fiber 链解析服务，天生带作用域",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "vendor/cordis/src/reflect.ts",
+      "contains": "cannot get required service",
+      "note": "未声明就读服务直接抛错——隐式全局单例从类型层面被挤掉",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "vendor/cordis/src/fiber.ts",
+      "symbol": "FiberState",
+      "note": "一次插件应用的可逆运行时状态机（PENDING/LOADING/ACTIVE/…/DISPOSED）",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "vendor/cordis/src/fiber.ts",
+      "symbol": "_refresh",
+      "note": "epoch 机制：把 inject 的提供者 fiber uid 拼成 epoch，服务上下线自动触发可逆重载",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "vendor/cordis/src/fiber.ts",
+      "contains": "disposables.splice(0).reverse()",
+      "note": "disposer 反序执行：所有注册类 API 都是 effect，卸载自动回卷",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "vendor/cordis/src/events.ts",
+      "symbol": "waterfall",
+      "note": "带否决权的有序链：listener 不调 next() 即短路，是后续 agent/tools 扩展点的形态",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "apps/cli/src/profile-boot.ts",
+      "symbol": "PROFILE_ROOT_CONFIG",
+      "note": "空根配置：树由 patch 层栈叠出来，bundle（发布单位）/profile（组合单位）/patch（唯一修改方式）三者分离",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "vendor/include/src/index.ts",
+      "symbol": "applyEntryPatches",
+      "note": "patch 应用算法：全部层一次性展平应用到空根，同 id 整行替换",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "vendor/include/src/index.ts",
+      "contains": "so a dump can never drift from what boots",
+      "note": "dump 与 boot 共用同一次组合调用——所见即所挂载",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/bundle/base/README.md",
+      "contains": "there is no deep-merge layer",
+      "note": "上游自认的取舍：整行替换换来源可解释性， Known Limitations 第一条",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/bundle/base/cordis.patch.yml",
+      "contains": "Row order carries no load semantics",
+      "note": "行顺序无语义：激活由服务可用性驱动，配置里写不出启动顺序",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/boot/app-boot/src/profile.ts",
+      "symbol": "healProfilesModuleFallback",
+      "note": "模块解析自愈：out-of-tree 插件共享唯一 cordis 实例",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/boot/app-boot/src/index.ts",
+      "symbol": "installFailLoud",
+      "note": "unhandledRejection 必须响亮失败：一行诊断 + 终端恢复 + exit(1)",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/agent/src/inbox.ts",
+      "symbol": "claim(target: InboxTarget",
+      "note": "claim 纪律：每次清空 next-step + 至多弹一条 next-turn；标 @internal，不是插件扩展点",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/agent/src/runtime-types.ts",
+      "contains": "Data decides",
+      "note": "数据决定论：turn-stopping 的抗议方式是 steer 写数据，机器重读 inbox 裁决，监听顺序不能改变结果",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/agent-loop/src/agent.ts",
+      "symbol": "class ReactLoopAgent",
+      "note": "默认 driver：显式 idle/maintenance/running 状态机，实现 core/agent 声明的接口",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/agent-loop/src/agent.ts",
+      "symbol": "wakingAfterAbort",
+      "note": "abort 窗口到达的唤醒输入重分类到 next-turn 并 latch，收敛后重放",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/agent-loop/src/agent.ts",
+      "contains": "every exit assigns a turn ending",
+      "note": "配平纪律：turn/end 在 finally 落盘，所有退出路径都有闭合事件",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/agent-loop/src/tool-calls.ts",
+      "symbol": "appendSkippedToolCall",
+      "note": "取消时为未启动调用补 tool/call + 合成 TOOL_ABORTED_BEFORE_DISPATCH 结果，replay 保持合法",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/agent-loop/src/tool-calls.ts",
+      "symbol": "commitReady",
+      "note": "有序提交：结果只沿连续 model-order slot 前进，并发完成不改变模型看到的顺序",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "docs/agent-lifecycle.md",
+      "contains": "agent/pre-step",
+      "note": "官方事件时序图：读完源码用它自检完整 turn 序列",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/session/src/types.ts",
+      "symbol": "SessionEventMap",
+      "note": "哪些事实有资格进日志：merge-extensible 的事件词汇表，新模型可见输入必须以新事件形式出现",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/session/src/index.ts",
+      "symbol": "deriveMessages",
+      "note": "模型上下文投影：不扫日志扫 surface 节点序列，缓存按 replaceGeneration 失效",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/session/src/surface.ts",
+      "contains": "deliberately shadows replaced ranges",
+      "note": "压缩对模型生效、用户看过的原文永远可从日志找回：append-origin 事件才是 transcript 的 durable 素材",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/agent-loop/src/invariant.ts",
+      "contains": "diverges from the dispatch-time durable derivation",
+      "note": "model-visible means logged 的运行时执法：每个 llm 请求与日志重投影逐字节比对",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/agent-loop/tests/request-reconstruction.spec.ts",
+      "contains": "THEOREM: every request rebuilds byte-equal",
+      "note": "以 THEOREM 命名的测试：全新 Session 重建每个请求前缀并逐字段比对",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/session/src/repair.ts",
+      "symbol": "interruptedTurnClosers",
+      "note": "崩溃修复：悬空调用合成结果、补 step/end 与 turn/end{interrupted}——interrupted 只有持久化 reload 会产生",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/llm/llm/src/index.ts",
+      "symbol": "abstract class LlmAdapter",
+      "note": "缝隙最小化：adapter 必须实现的只有一个 stream 方法，返回 AsyncIterable<StreamChunk>",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/llm/llm/src/index.ts",
+      "symbol": "prepareCall",
+      "note": "一次性调用快照：registration+固化配置+retry policy 绑定，HMR 不能把两个 adapter 的事实拼在一起",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/llm/llm/src/types.ts",
+      "symbol": "StreamChunk",
+      "note": "7 种闭联 chunk 类型；顺序契约：usage 在 finish 之前，finish 之后什么都没有",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/llm/llm/src/assembler.ts",
+      "contains": "ignore stragglers",
+      "note": "唯一组装器：block-end 冻结后迟到 delta 被忽略，行为不端的 adapter 无法污染已完成的块",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/llm/llm-deepseek/src/adapter.ts",
+      "contains": "transport-only",
+      "note": "adapter 自述定位：仅传输层，验证/分层/凭证策略归插件；配置每请求经 thunk 重解析",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/llm/llm-deepseek/src/sse.ts",
+      "contains": "SSE stream ended without [DONE]",
+      "note": "SSE 截断即失败：EOF 处未终结的尾巴是 truncation 不是可冲刷载荷",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/llm/llm-deepseek/src/translate.ts",
+      "contains": "model returned a completed response with no content",
+      "note": "成功 finish 但零内容块翻成错误事件：空消息会静默终结 turn，宁可当可重试错误",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/llm/llm/src/adapter-failure.ts",
+      "symbol": "normalizeLlmFailure",
+      "note": "敌意输入收敛：非 Error、跨 realm 副本、恶意 getter 全部折叠为冻结的 LlmFailure 事实",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/tools/src/schema.ts",
+      "symbol": "defineTool",
+      "note": "作者 DSL：output 契约强制 value（schema 约束的 lossless JSON）与 render（纯函数投影）分离",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/tools/src/index.ts",
+      "contains": "listener ordering cannot turn a denial back into permission",
+      "note": "单调 guard：无 allow 返回值，类型上不可翻转的拒绝与可扩展策略分开",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/tools/src/index.ts",
+      "contains": "observe — or worse, approve — a call that can only fail",
+      "note": "确定性拒绝先于策略管线：审批与 guard 不得观察更不得批准注定失败的调用",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/tools/src/index.ts",
+      "symbol": "isConcurrencySafe",
+      "note": "逐调用并发分类，缺失/异常一律 exclusive——fail-closed",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/agent-loop/src/tool-calls.ts",
+      "symbol": "commitReady",
+      "note": "有序提交：结果只沿连续 model-order slot 前进，dispatch 并发但不改变模型看到的顺序",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/agent-loop/src/tool-calls.ts",
+      "contains": "without fabricating results",
+      "note": "调度器内部故障：排空已启动调用并抛错，绝不伪造结果——故障与取消在日志里是不同的词",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/tools/tests/tools.spec.ts",
+      "contains": "never reach the model",
+      "note": "schema 白名单投影的测试证据：超时/并发标记/presenter 永不上模型",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/fs/fs/src/index.ts",
+      "symbol": "abstract class FileSystem",
+      "note": "Service Definition：只声明接口与事件词汇不实现；三角色（Definition/Provider/Consumer）齐备才算能力",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/scope/src/index.ts",
+      "symbol": "createScope",
+      "note": "作用域原语：opaque key + 子 fiber；agent.ctx 上的注册随 scope dispose 整组回卷",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/scope/src/index.ts",
+      "contains": "events flow up the chain, never",
+      "note": "事件只上行：祖先 listener 收到后代事件，反向不存在",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/fs/fs-sandbox/src/index.ts",
+      "contains": "NOT a kernel boundary",
+      "note": "进程内围栏的自我诚实声明：TRUSTED code 上的策略检查，不是内核边界；内核级隔离归 ctx.shell",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/sandbox/sandbox-policy/src/index.ts",
+      "symbol": "SandboxPolicyService",
+      "note": "策略唯一家：read-only fail-safe 默认；fs/bash/终端读同一份 resolved policy，圈不出不同的根",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/sandbox/sandbox/src/index.ts",
+      "contains": "refusing to run the command unconfined",
+      "note": "SANDBOX_UNAVAILABLE：fail-closed 端点，后端不可用时拒绝执行而非静默穿透",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/interaction/user-approval/src/index.ts",
+      "contains": "Exactly one per ask",
+      "note": "成对审计：approval/asked 与 approval/decided 每问恰好一对；未落日志的决策不算决策",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/system-prompt/src/index.ts",
+      "symbol": "class SystemPrompt",
+      "note": "系统提示是注册表不是字符串：sections 与 tool schemas 每 step 现场组装，改提示=改插件注册",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/core/agent-loop/src/runtime-context.ts",
+      "symbol": "RuntimeContextProjection",
+      "note": "运行时上下文投影成 user/message 事件入日志——model-visible means logged 禁止内存注入捷径",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/compaction/compaction-basic/src/index.ts",
+      "contains": "replaceGeneration",
+      "note": "压缩用 surface replace；落盘前视图代数变了就重试（retrying from the replacement surface）而非覆盖",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/compaction/compaction-tool-result-pruner/src/index.ts",
+      "symbol": "class ToolResultPruner",
+      "note": "model-free 的工具结果瘦身：处理单条结果过大，与处理整段历史的 compaction 是两个机制",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/spill/spill/src/index.ts",
+      "contains": "spill",
+      "note": "长结果外置：canonical value 不动，只有 durable/model copy 允许改写的那份被替换",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/skill/skill-filesystem/src/index.ts",
+      "contains": "ctx.skills",
+      "note": "技能渐进披露：文件系统形态 + agent scope 加载，全局目录不无条件进入每个 agent",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/llm/token-meter/src/index.ts",
+      "symbol": "BlockAssembler",
+      "note": "token 对账靠重放：与实时流用同一个组装器，账目分歧这个 bug 品类不存在",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "docs/subsystems/subagent.md",
+      "contains": "subagent",
+      "note": "官方定位与 spawn/fork/continuable 对比表",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/subagent/subagent-spawn-in-process/src/index.ts",
+      "symbol": "inheritsParentContext",
+      "note": "spawn 的语义开关：false = 干净房间，与 fork 是语义选项不是性能选项",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/subagent/subagent-fork-in-process/src/index.ts",
+      "contains": "completedTurnPrefix",
+      "note": "fork 只取到最后 turn/end 的平衡前缀——fork 边界由日志可重放性决定",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/jobs/jobs/src/index.ts",
+      "symbol": "JobRegistry",
+      "note": "抽象契约：直接实例化抛错；durable backend 是 seam 预留位不是现状",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/jobs/jobs-local/README.md",
+      "contains": "process-local",
+      "note": "易失性是声明的：records die with the harness process——不把进程内状态伪装成 durable",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/workflow/workflow-worker-thread/src/index.ts",
+      "contains": "containment rather than a security boundary",
+      "note": "worker thread 的诚实声明：能终止失控代码的遏制边界，不是对抗恶意代码的安全边界",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/bundle/headless/src/index.ts",
+      "symbol": "summarize",
+      "note": "最小表面：活动区间 = 日志 seq 切片（firstSeq 到 whenIdle），没有第二套任务状态",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/sdk/protocol/src/transport.ts",
+      "symbol": "JsonRpcLineTransport",
+      "note": "NDJSON 传输三事实：畸形行忽略（源码选择，非规范 -32700）、-32601/-32603、notification 无响应",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/sdk/server/src/server.ts",
+      "contains": "without assigning later activity to it",
+      "note": "receipt 设计宣言：服务器拒绝替客户端归因活动，prompt 只回 durable messageId",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/sdk/client/src/api.ts",
+      "symbol": "isInboxReceipt",
+      "note": "归因在客户端走持久日志：inbox 收据为左端点、session.status idle 为右端点",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "packages/acp/acp/src/index.ts",
+      "symbol": "settleAfterQuiescence",
+      "note": "ACP 结算（rc.5 形态）：prompt 等到 whole-agent idle 与输出排空才结算，cancel 不误杀无关工作（rc.5 名为 settlePrompt，rc.7 改名——漂移实证见 deep-reading.md §表面）",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "python/sdk/src/deepseek_harness/api.py",
+      "symbol": "_is_inbox_receipt",
+      "note": "Python 客户端逐行镜像同一 receipt→idle 循环：双客户端互为协议契约十字检查",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "docs/testing.md",
+      "contains": "do not ration real-API tests",
+      "note": "五条测试 lane 的态度：keyless 必跑但从不假装替代 real-API，结论分栏不混报",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "docs/architecture.md",
+      "contains": "Where new behavior goes",
+      "note": "出口检查表：毕业项目的选型依据——十几种扩展机制没有一行是修改核心代码",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "docs/cookbook/adding-a-package.md",
+      "contains": "dsh",
+      "note": "新包骨架与 package.json 的 dsh 字段：bundle/profile 声明式挂载（L02 纪律）",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "docs/cookbook/adding-a-tool.md",
+      "contains": "ctx.tools",
+      "note": "走工具注册表的完整路径：schema 入 prompt 组装、执行过 L06 管线",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "docs/cookbook/adding-an-llm-adapter.md",
+      "contains": "adapter",
+      "note": "选做方向：L05 的缝隙最小化在 cookbook 里的落地步骤",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "examples/headless-agent/README.md",
+      "contains": "headless",
+      "note": "最小可组合示例：当模板抄，毕业项目的真实入口验证跑它",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "docs/cookbook/adding-a-tool.md",
+      "symbol": "defineTool",
+      "note": "毕业项目的核心 API：defineTool 的输出契约（value schema + render）在 L06 精读过",
+      "doc": "deep-reading.md"
+    },
+    {
+      "path": "docs/architecture.md",
+      "symbol": "ctx.agents",
+      "note": "四个产品表面共享的唯一 agent 工厂：毕业扩展最终被它消费",
+      "doc": "deep-reading.md"
+    }
+  ]
+}

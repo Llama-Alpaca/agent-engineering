@@ -1,0 +1,226 @@
+{
+  "course": "deepseek-harness-advanced-lessons",
+  "commit": "99f6f02fecdb7dff40c3fbc9470f5907c29f74ca",
+  "anchors": [
+    {
+      "path": "packages/sdk/protocol/src/transport.ts",
+      "symbol": "JsonRpcLineTransport",
+      "note": "NDJSON 传输：畸形 peer 行忽略是源码选择——传输层的任务是帧同步，不是当协议警察"
+    },
+    {
+      "path": "packages/sdk/protocol/src/transport.ts",
+      "contains": "malformed peer lines are ignored",
+      "note": "与规范 -32700 的分歧点：读源码事实不读教材想象"
+    },
+    {
+      "path": "packages/acp/acp/src/content.ts",
+      "symbol": "admitAcpPrompt",
+      "note": "两遍式 admission 事务：纯校验→能力检查→整批落盘→取消围栏"
+    },
+    {
+      "path": "packages/acp/acp/src/content.ts",
+      "symbol": "supportsAcpImagePrompts",
+      "note": "能力只诚实广播：attachment+路由+输入模态全部可验证成立才声明 image prompt"
+    },
+    {
+      "path": "packages/acp/acp/src/content.ts",
+      "contains": "never queues a late user message",
+      "note": "决策原话：孤儿附件（可回收的垃圾）优于晚入队（不可逆的语义错误）"
+    },
+    {
+      "path": "packages/acp/acp/src/index.ts",
+      "symbol": "settleAfterQuiescence",
+      "note": "三道门静默结算（rc.5 叫 settlePrompt）：admission→whenIdle→输出排空；admission 不是 Agent 的工作，cancel 不误杀自主任务"
+    },
+    {
+      "path": "packages/sdk/protocol/src/types.ts",
+      "contains": "Durable enqueue receipt",
+      "note": "SessionPromptResult 的类型注释：返回值被明确定义为持久收据而非结果"
+    },
+    {
+      "path": "packages/sdk/server/src/server.ts",
+      "contains": "without assigning later activity to it",
+      "note": "决策宣言：服务器拒绝替客户端归因后续活动"
+    },
+    {
+      "path": "packages/sdk/client/src/api.ts",
+      "symbol": "isInboxReceipt",
+      "note": "区间左端点：agent/inbox/spliced 里的 messageId——消息落入持久 inbox 的那一刻，不是 RPC 返回那一刻"
+    },
+    {
+      "path": "packages/sdk/client/src/client.ts",
+      "symbol": "subscribeSessionTree",
+      "note": "服务器广播、客户端裁剪：subagent 族谱由客户端现场累积，服务器不知道谁关心什么"
+    },
+    {
+      "path": "packages/sdk/client/src/client.ts",
+      "contains": "wire-level cancel",
+      "note": "诚实的无取消契约：超时的请求在服务器侧继续跑——不提供的能力也写进注释"
+    },
+    {
+      "path": "python/sdk/src/deepseek_harness/api.py",
+      "symbol": "_is_inbox_receipt",
+      "note": "第二语言镜像：TS/Python 两个客户端独立投影同一协议，互为合规测试"
+    },
+    {
+      "path": "packages/session/session-projection/src/index.ts",
+      "contains": "SessionProjectionMap",
+      "note": "host 侧投影定义端：merge-extensible 的投影类型表，包注册「我从日志投影出 X」——推导权唯一"
+    },
+    {
+      "path": "packages/client/runtime/README.md",
+      "contains": "higher-seq-wins",
+      "note": "客户端运行时自述：ProjectionValueStore 由 history-tail 播种、推送帧驱动，规则只有一条"
+    },
+    {
+      "path": "packages/client/runtime/src/client/sessions/projection-store.ts",
+      "symbol": "ProjectionValueStore",
+      "note": "通用投影存储：不理解投影语义也能用单调 seq 正确合并——最便宜的并发协议"
+    },
+    {
+      "path": "packages/client/runtime/README.md",
+      "contains": "shared event window",
+      "note": "窗口组装层：视图只持当前窗口 + 历史分页，节点 identity 在翻页移动中保持"
+    },
+    {
+      "path": "packages/preset/agent-presets/src/index.ts",
+      "symbol": "ensureStanding",
+      "note": "standing mount：roster 每进程只挂一次 preset，会话经 scope 父链 join——同名 preset 全进程同一对象"
+    },
+    {
+      "path": "packages/preset/agent-presets/src/index.ts",
+      "symbol": "recompose",
+      "note": "换组合只许在 agent 一无产出时：中途换会让日志引用新组合无法解释的调用"
+    },
+    {
+      "path": "packages/preset/agent-presets/src/index.ts",
+      "contains": "swapping tools mid",
+      "note": "决策原话：日志约束 API 的形状——事件溯源的数学后果，不是产品偏好"
+    },
+    {
+      "path": "packages/preset/agent-presets/src/mount.ts",
+      "symbol": "PresetMountError",
+      "note": "挂载审计：inactiveRows（半死行）与 leakedServices（泄入 ROOT realm）任一命中即整树回滚"
+    },
+    {
+      "path": "packages/preset/agent-presets/src/mount.ts",
+      "contains": "A rejection leaves nothing mounted",
+      "note": "创建即事务：拒绝后没有半组合状态；PresetTree.write() 置空——preset 是输入永不是持久化目标"
+    },
+    {
+      "path": "packages/preset/agent-presets/src/preset.ts",
+      "symbol": "PRESET_ID",
+      "note": "id 是遏制边界不是风格规则：id 成为路径段，防越出 preset 目录"
+    },
+    {
+      "path": "packages/jobs/jobs/src/index.ts",
+      "symbol": "JobRegistry",
+      "note": "抽象契约：直接实例化抛错；durable backend 是 seam 预留位，不是现状"
+    },
+    {
+      "path": "packages/jobs/jobs-local/src/index.ts",
+      "contains": "belongs to another session",
+      "note": "owner fence：ids are predictable, so authorization — not secrecy — is the boundary"
+    },
+    {
+      "path": "packages/jobs/jobs-local/src/index.ts",
+      "contains": "First-wins preserves a teardown force-failure",
+      "note": "first-wins 结算：teardown 强制失败不被迟到 producer 覆盖；completion 最后宣布（reporter 可能同步开模型 turn）"
+    },
+    {
+      "path": "packages/jobs/jobs-local/README.md",
+      "contains": "records die with the harness process",
+      "note": "易失性是声明的：Jobs are process-local——不伪装持久，durable 留作 seam"
+    },
+    {
+      "path": "packages/workflow/workflow-worker-thread/src/index.ts",
+      "contains": "containment rather than a security boundary",
+      "note": "worker 是遏制不是安全：能终止失控代码 ≠ 能对抗恶意代码"
+    },
+    {
+      "path": "packages/subagent/subagent-fork-in-process/src/index.ts",
+      "contains": "completedTurnPrefix",
+      "note": "对照：durable 的那种——子会话日志可恢复，fork 只取平衡前缀"
+    },
+    {
+      "path": "packages/interaction/user-approval/src/index.ts",
+      "contains": "Exactly one per ask",
+      "note": "成对审计：approval/asked 与 approval/decided 每问恰好一对；未落日志的决策不算决策"
+    },
+    {
+      "path": "packages/interaction/user-approval/src/index.ts",
+      "contains": "fail the QUESTION closed",
+      "note": "fail-closed 归一：无应答/抛错/超纲返回全部折叠为 unavailable——缝隙遏制自己的回调"
+    },
+    {
+      "path": "packages/sandbox/sandbox/src/escalation.ts",
+      "symbol": "WIDER_MODES",
+      "note": "严格变宽表：不变宽的升级请求根本不问人；grant 只 stamp 到被问的那一次调用"
+    },
+    {
+      "path": "packages/sandbox/sandbox/src/index.ts",
+      "contains": "refusing to run the command unconfined",
+      "note": "SANDBOX_UNAVAILABLE fail-closed 端点：后端不可用时拒绝执行，没有静默穿透路径"
+    },
+    {
+      "path": "packages/interaction/permission-presets/src/index.ts",
+      "contains": "permission/preset",
+      "note": "预设是 UX 不是权限模型：写预设事件 + 两个独立旋钮事件；执行永远读旋钮 fold"
+    },
+    {
+      "path": "packages/fs/fs-sandbox/src/index.ts",
+      "contains": "NOT a kernel boundary",
+      "note": "每层只声明真实强度：进程内围栏自报 containment not security，与 enforcement:partial 同一哲学"
+    },
+    {
+      "path": "docs/testing.md",
+      "contains": "do not ration real-API tests",
+      "note": "真实资源不配给：有 key 尽量测；同时 preflight 在 key 缺失时硬失败防假绿"
+    },
+    {
+      "path": "docs/testing.md",
+      "contains": "dead code",
+      "note": "覆盖门的哲学：per-file 100% 是删除死代码的工具，不是炫耀数字"
+    },
+    {
+      "path": "package.json",
+      "contains": "test:snapshot",
+      "note": "lane 的入口在根 scripts：unit/snapshot/e2e/web 分层从这里组合"
+    },
+    {
+      "path": "scripts/run-gates.ts",
+      "symbol": "coverageGates",
+      "note": "CI 门禁组合逻辑：coverageGates/snapshotGate/webSnapshotGate 的可编程装配"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "contains": "DSH_SNAPSHOT",
+      "note": "CI 强制 replay 只读：永不写 expected——基准漂移只能是显式人类决定"
+    },
+    {
+      "path": ".github/workflows/e2e.yml",
+      "contains": "DEEPSEEK_API_KEY",
+      "note": "real-API lane 的 secret 映射与 preflight；fork PR 的 skipped-as-success 只用于拿不到 secret 的场景"
+    },
+    {
+      "path": "packages/llm/llm/src/assembler.ts",
+      "contains": "The one shared keep/drop decision",
+      "note": "rc.7 新增 assembled()：keep/drop 与 replay 剪裁统一到一处——rc.5 没有这段，是三快照对比的直接证据"
+    },
+    {
+      "path": "packages/acp/acp/src/content.ts",
+      "symbol": "admitAcpPrompt",
+      "note": "rc.5 时 admission 还在 index.ts 里；模块长出来本身就是演进事实"
+    },
+    {
+      "path": "packages/acp/acp/src/index.ts",
+      "symbol": "settleAfterQuiescence",
+      "note": "rc.5 叫 settlePrompt——课程十二 L10 的锚点锁的就是旧名，跨快照跑校验器即可看到断裂"
+    },
+    {
+      "path": "docs/testing.md",
+      "contains": "do not ration real-API tests",
+      "note": "决策存活的样本：master（0.1.1-rc.2）上原文仍在；对照 workflows 目录从 6 个长到 18 个"
+    }
+  ]
+}

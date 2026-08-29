@@ -1,0 +1,13 @@
+# Lab 5: the scripted model calls bash; a policy gate denies it.
+- id: agent-default-model
+  config:
+    provider: lab-scripted
+    model: lab-echo-1
+
+- insert:
+    - id: lab-scripted-llm
+      name: '/path/to/your/deepseek-harness/examples/lab-src/scripted-llm.ts'
+      config:
+        finalText: 'Lab 5 complete: the bash call was denied by policy and the model saw the reason.'
+    - id: lab-deny-bash
+      name: '/path/to/your/deepseek-harness/examples/lab-src/deny-bash.ts'

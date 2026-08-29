@@ -1,0 +1,11 @@
+# Lab 1: observer plugin + course-provided scripted adapter (keyless turn).
+- id: agent-default-model
+  config:
+    provider: lab-scripted
+    model: lab-echo-1
+
+- insert:
+    - id: lab-scripted-llm
+      name: '/path/to/your/deepseek-harness/examples/lab-src/scripted-llm.ts'
+    - id: lab-hello
+      name: '/path/to/your/deepseek-harness/examples/lab-src/hello.ts'

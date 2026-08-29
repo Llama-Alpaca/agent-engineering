@@ -84,7 +84,7 @@ flowchart LR
 | 生产 | [Agent 生产可靠性](agent-ops-lessons/) | 步数/成本预算、熔断降级、幂等审批、断点续跑、混沌评估 | 10/10 |
 | 前沿 | [常驻主动 Agent](ambient-agent-lessons/) | 调度触发、变化检测、增量研究、打扰决策、常驻运营 | 10/10 |
 | 前沿 | [Agent 执行骨架](harness-lessons/) | 上下文账本、压缩纪律、记忆文件、子代理隔离、改道与渐进披露 | 10/10 |
-| 源码 | [DeepSeek Harness 源码精读](deepseek-harness-lessons/) | 真实源码导读：插件树、Agent Loop、事件溯源、能力替换与设计思想 | 12/12 |
+| 实战 | [DeepSeek Harness 实战通读](deepseek-harness-lessons/) | 真实 checkout 里跑起来、改起来：6 个零 Key lab + 12 章源码深读 | 6+12 |
 | 进阶 | [DeepSeek Harness 设计决策专题](deepseek-harness-advanced-lessons/) | 八个设计决策案例：协议、归因、投影、组合、所有权、审批、测试、演进 | 8/8 |
 
 ## 作品项目
@@ -330,43 +330,30 @@ flowchart LR
 
 > 已完成全部 **10 节课** 🎉。**两条贯穿主线**：①窗口经济主线（预算第四层——空间：每个 token 都要为「留在注意力里」付租金，账本量租金/整形砍租金/压缩收房/外置退租；与课程十的注意力经济同一枚硬币——那边省人的注意力，这边省模型的）；②外置化主线（虚拟内存观：窗口=RAM、文件=磁盘、压缩=swap、子代理=进程隔离、索引=懒加载）。killer row：**「截断买到活着，买不到记得」**。每课 README 有「流派对比」小节 + 至少一道「设计实验验证」练习。落地后 research-assistant 新增 118 个测试（全量 449 全绿），九开关默认关，纯净跑零税，全部测试确定可复现（可注入 tokenizer，双跑逐字节一致）。
 
-## 课程十二：DeepSeek Harness 源码精读：架构与设计思想（共 12 节课）
+## 课程十二：DeepSeek Harness 实战通读（6 个 lab + 12 章深读）
 
-> 本课锁定 DeepSeek Harness 的完整源码提交 `47f943859bef60e4160492346772ded9b24f765a`，是一门**读真实源码、学设计决策的课**。课程先给一条系统级因果主线（Agent 产品的四根支柱都在以周为单位变化 → 「凡是会变的，都是插件」→ 由此带来的四个工程问题如何被逐一解决），每课再用同一节奏展开：**先摆常规做法、看它在哪里坏掉 → 再读 dsh 的机制源码 → 说清这样设计具体买到什么、付出什么代价**——每个论断都钉在真实源码、测试用例名或注释原文上，不说空话。每课 `anchors.json` 登记它引用的每个路径/符号/注释，`code.ts` 是锚点校验器——没有本地 checkout 时校验课程材料自洽，有 checkout 时对真实源码逐条复核，上游漂移会响亮失败而不是悄悄过期。
+> 第三次重定义（2026-08）：模拟器版学的是课程的玩具；纯导读版输给官方文档。本版把课程立在唯一站得住的位置——**带你在一个真实 checkout 里把 dsh 用起来、扩展起来、拆装起来**。锁 `99f6f02`（rc.7，与课程十三共用 checkout），全部 lab 的命令与输出由课程作者在同一 SHA 真机验证，**全程零 API Key**：Lab 2 你会写一个 50 行的 scripted LLM adapter，用剧本模型驱动真实的循环、工具管线与会话日志（与上游 keyless 测试 lane 同构——系统是真的，只有模型边界可插拔，这正是 dsh 的架构承诺）。
 
-| # | 课程 | 设计问题 |
+| 段 | 内容 | 入口 |
 |---|---|---|
-| 00 | [开箱与源码地图](deepseek-harness-lessons/00_baseline_source_map/) | 两百个包的仓库怎样变成可读的；启动链路与空根+patch |
-| 01 | [Cordis：插件、服务与可逆生命周期](deepseek-harness-lessons/01_cordis_lifecycle/) | 注册即效应、epoch 重载、waterfall 否决权 |
-| 02 | [Profile、Bundle 与 Patch：配置即架构](deepseek-harness-lessons/02_profile_bundle_composition/) | 整行替换不做 deep merge；dump 即 boot |
-| 03 | [Agent Registry、Inbox 与 Turn/Step Loop](deepseek-harness-lessons/03_agent_turn_step_loop/) | 双队列 inbox、数据决定论、取消配平纪律 |
-| 04 | [Session 事件溯源：一份日志，多份投影](deepseek-harness-lessons/04_session_event_sourcing/) | model-visible means logged 及其运行时执法者 |
-| 05 | [LLM 流式适配：Adapter、chunk 与错误即事件](deepseek-harness-lessons/05_llm_streaming_adapter/) | 唯一组装器、错误规范化为 terminal finish |
-| 06 | [Tool Runtime：契约、管线与并发纪律](deepseek-harness-lessons/06_tool_execution_pipeline/) | value/render 分离、单调 guard、并发解耦提交序 |
-| 07 | [Capability Seam、作用域与执行安全](deepseek-harness-lessons/07_capability_sandbox/) | 三角色缝隙换 provider 零改动；能力事实诚实 |
-| 08 | [上下文机制的实现落点](deepseek-harness-lessons/08_context_scope/) | 课程十一概念到上游包与扩展点的逐行映射 |
-| 09 | [Subagent、Jobs、Workflow 与所有权](deepseek-harness-lessons/09_subagent_workflow/) | fork 平衡前缀、授权而非保密、易失性声明 |
-| 10 | [产品表面与证据分层](deepseek-harness-lessons/10_surfaces_testing/) | receipt-not-result、协议面只留 committed 语义 |
-| 11 | [毕业课：读通之后做一次真实的扩展](deepseek-harness-lessons/11_capstone_auditable_bundle/) | 在真实 checkout 里写一个小插件并过上游测试 |
+| 动手（核心） | ①观察者插件亲见一个回合的全部事件 ②scripted adapter 零 Key 驱动真循环 ③`defineTool` 写真工具走五阶段管线 ④解开 append-only 会话日志 ⑤策略门拒绝与 fail-closed ⑥委派真实子代理、找到 durable 子会话 | [labs/](deepseek-harness-lessons/labs/) |
+| 深读（参考层） | 12 章：每章"常规做法会怎么坏 → 机制源码 → 买到什么/代价"，按 lab 对号入座 | [deep-reading.md](deepseek-harness-lessons/deep-reading.md) |
+| 毕业 | 真实 checkout 里做一次完整扩展并过上游自己的测试 | [深读 11 章](deepseek-harness-lessons/deep-reading/11-capstone.md) |
 
-> 已完成全部 **12 节课**。每课包含源码导读 README、锚点清单 `anchors.json`、校验器 `code.ts`、源码作业 `exercise.md` 和确定性测试；离线不需要 API Key，但要真正上这门课请用 `scripts/prepare_upstream.sh` 检出源码——功课在源码里，不在本仓里。
+## 课程十三：DeepSeek Harness 设计决策案例研习（8 个案例）
 
-## 课程十三：DeepSeek Harness 设计决策专题：协议、所有权与演进（共 8 节课）
+> 与课程十二共用 checkout（`99f6f02`）。每个决策一套固定工序：**困境 → 都带伤的选项 → 上游的选择与证据（源码注释/测试用例名/Known Limitations）→ 动手验证 → 代价 → 迁移**。招牌动作是 break-it：临时删掉那个决策、跑上游自己的测试看谁变红、还原——A05 的 fail-closed 归一化有作者逐条实测的完整流程（38 绿 → 删一行 → `normalizes a rogue non-vocabulary answer to unavailable` 变红，`expected 'yolo' to be 'unavailable'` → 还原 → 38 绿）。八案共享一个方法论：**在都带伤的选项里，选"哪种坏是可逆的"**。
 
-> 承接课程十二，锁定上游 `99f6f02fecdb7dff40c3fbc9470f5907c29f74ca`（rc.7），横向抽取**八个设计决策案例**。八个案例背后是同一组边界压力（取消竞态、进程死亡、无人应答、跨端并发……）；每课的方法论一致：**承认一个无法消除的坏情况 → 在几个都带伤的选项里选出「哪种坏可逆」→ 把理由读到源码注释、测试用例名与 Known Limitations 里**，并沿 `47f9438 (rc.5) → 99f6f02 (rc.7) → master` 的真实演进验证决策的稳定性。与课程十二共用锚点校验器与学习方法。
-
-| # | 决策案例 | 一句话问题 |
+| # | 案例 | 困境一句话 |
 |---|---|---|
-| 00 | [协议边界的诚实设计](deepseek-harness-advanced-lessons/00_acp_jsonrpc_boundary/) | 取消赢得 admission 后：孤儿附件还是晚入队消息？ |
-| 01 | [归因的设计：Receipt 而非结果](deepseek-harness-advanced-lessons/01_sdk_facade/) | 服务器为什么拒绝回答「这次调用发生了什么」？ |
-| 02 | [投影的分层](deepseek-harness-advanced-lessons/02_event_projection_replay/) | host、客户端、窗口三层冗余各回答什么？ |
-| 03 | [组合的事务性：Preset 与 Recompose](deepseek-harness-advanced-lessons/03_preset_composition_hmr/) | 为什么已在产出的会话不许换组合？ |
-| 04 | [所有权围栏：Jobs 与恢复边界](deepseek-harness-advanced-lessons/04_jobs_recovery/) | 边界靠保密还是授权？重启丢什么要不要写进文档？ |
-| 05 | [审批与能力证据](deepseek-harness-advanced-lessons/05_security_approval/) | 没人应答时放行还是拒绝？隔离不完整怎么自报？ |
-| 06 | [证据分层：五条测试 lane](deepseek-harness-advanced-lessons/06_e2e_testing_performance/) | 每条 lane 证明了什么、绝不证明什么？ |
-| 07 | [毕业课：三个快照之间的真实演进](deepseek-harness-advanced-lessons/07_upstream_evolution_capstone/) | rc.5→rc.7→master 的漂移验证了哪些决策？ |
-
-> 已完成全部 **8 节课**。文件约定与课程十二相同；锚点对 `99f6f02` 负责，毕业课做真实 drift 审计（含消费者兼容矩阵与换锁建议）。
+| 00 | [协议边界的诚实设计](deepseek-harness-advanced-lessons/cases/00-protocol-boundary.md) | 取消赢得 admission：孤儿附件还是晚入队消息？ |
+| 01 | [归因：Receipt 而非结果](deepseek-harness-advanced-lessons/cases/01-receipt-not-result.md) | 服务器为什么拒绝回答"这次调用发生了什么"？ |
+| 02 | [投影的分层](deepseek-harness-advanced-lessons/cases/02-layered-projections.md) | 三层冗余是浪费还是分工？ |
+| 03 | [组合的事务性](deepseek-harness-advanced-lessons/cases/03-transactional-composition.md) | 已在产出的会话为什么不许换组合？ |
+| 04 | [所有权围栏](deepseek-harness-advanced-lessons/cases/04-ownership-fences.md) | 边界靠保密还是授权？重启丢什么写不写文档？ |
+| 05 | [审批与能力证据](deepseek-harness-advanced-lessons/cases/05-fail-closed-approval.md) | 没人应答：放行还是拒绝？（break-it 实测） |
+| 06 | [证据分层](deepseek-harness-advanced-lessons/cases/06-evidence-layers.md) | 五条测试 lane 各证明什么、绝不证明什么？ |
+| 07 | [毕业：真实演进](deepseek-harness-advanced-lessons/cases/07-evolution-capstone.md) | rc.5→rc.7→master 的漂移验证了哪些决策？ |
 
 </details>
 
@@ -404,15 +391,15 @@ RAG-test/
 ├── agent-ops-lessons/         ← 课程九：Agent 生产可靠性 / AgentOps（10 课，已完成）
 ├── ambient-agent-lessons/     ← 课程十：常驻主动式 Agent / Ambient（10 课，已完成）
 ├── harness-lessons/           ← 课程十一：Agent 执行骨架与上下文工程（10 课，已完成）
-├── deepseek-harness-lessons/  ← 课程十二：DeepSeek Harness 源码精读：架构与设计思想（12 课，已完成）
-├── deepseek-harness-advanced-lessons/ ← 课程十三：DeepSeek Harness 设计决策专题：协议、所有权与演进（8 课，已完成）
+├── deepseek-harness-lessons/  ← 课程十二：DeepSeek Harness 实战通读（6 个零 Key lab + 12 章深读，labs 由作者真机验证）
+├── deepseek-harness-advanced-lessons/ ← 课程十三：DeepSeek Harness 设计决策案例研习（8 案例，含 break-it 实测）
 ├── portfolio-projects/        ← 🚀 生产级作品集项目（学完课程后的落地，ops/docint/frontier/gui/agentops/ambient 主战场）
 │   ├── knowledge-base-qa/     ←   企业知识库问答（RAG，多模态文档智能 v3）
 │   └── research-assistant/    ←   AI 研究分析助手（多智能体 + FastAPI + Docker，会上网，长途研究 v5）
 └── docs/                      ← 设计文档与实现计划
 ```
 
-每节课至少包含：**①原理 README（讲 why 和取舍）+ ②可运行代码（Python 课程为 `code.py`，课程十二和十三为锚点校验器 `code.ts`）+ ③练习**；两门 DeepSeek Harness 课程另外逐课提供 `anchors.json`（源码锚点清单）与 `tests/`。
+每门课程至少包含：**①原理文档（讲 why 和取舍）+ ②可运行/可验证的东西 + ③练习**。Python 课程为每课 `code.py`；两门 DeepSeek Harness 课程为**作者真机验证过的 lab 命令与输出**（课程十二 `labs/`）与 break-it 实验流程（课程十三 `cases/`），另以课程级 `anchors.json`（源码锚点清单）+ `scripts/check_upstream_drift.sh`（对锁定 SHA 逐条复核）保证课程引用不随上游漂移静默过期。
 作品集项目则是**模块化工程结构**（src/ + api/ + tests/ + Docker），按生产标准组织。
 
 ---

@@ -19,6 +19,10 @@
 
 ### Changed
 
+- **两门 DeepSeek Harness 课程第三次重定义：从「导读课」改为「动手课」**（2026-08-29，用户评审结论：纯导读相对官方文档价值增量不足，学习者全程在"读"从没在"做"）：
+  - 课程十二重构为「实战通读」——`labs/` 六个实验（观察者插件、scripted LLM adapter 零 Key 驱动真实循环、defineTool 真工具、读 append-only 会话日志、策略门拒绝、委派子代理并找到 durable 子会话），全部命令与输出由课程作者在锁定 SHA 真机执行验证；旧 12 个"每课五件套"目录删除，课文精华迁移为 `deep-reading/` 12 章参考层；锚点从每课收敛为课程级 `anchors.json` + `scripts/check_anchors.ts`
+  - 课程十三重构为「设计决策案例研习」——`cases/` 八个案例统一工序（困境 → 选项 → 证据 → 动手验证 → 代价 → 迁移）；新增 break-it 实验法并由作者实测（A05：基线 38 绿 → 删除 fail-closed 归一化一行 → `normalizes a rogue non-vocabulary answer to unavailable` 变红 `expected 'yolo' to be 'unavailable'` → 还原全绿；jobs+preset 基线 194 绿实测）
+  - 两课统一锁定 `99f6f02`（rc.7，一个 checkout 服务两门课；课程十二自 rc.5 迁移，82 锚点对 rc.7 复核仅 1 处符号改名）；CI 脚本入口不变
 - **两门 DeepSeek Harness 课程升级为「why 优先」写法**（2026-08-29）：课程十二每课新增「常规做法会怎么坏」核心段——先摆业界直觉做法、走 2–3 个具体失败场景（每个都能指到上游为它写的测试/invariant/注释），再进入源码精读；课末格言式「设计思想」改为「这样设计买到了什么，付出什么代价」。两门课 README 各新增一条系统级设计主线（课程十二：领域压力 → dsh 的回答 → 具体买到什么；课程十三：八个决策背后的共同边界压力与「哪种坏可逆」方法论），课程十三每课补齐「代价」块。中英文根 README 课程引言同步改写
 - **两门 DeepSeek Harness 课程重新定义**（2026-08-29，见 `docs/superpowers/specs/2026-08-29-deepseek-harness-course-redefinition.md`）：从「自造模拟器实验课」改为「读真实源码、学设计决策」。删除每课 300–870 行的课程自建模拟实现，代之以锚点机制——每课 `anchors.json` 登记引用的真实路径/符号/注释，`code.ts` 变为校验器（无 checkout 时校验课程材料自洽，有 checkout 时对真实源码逐条复核），`exercise.md` 改为在真实源码里完成的作业；上游漂移会响亮失败而非静默过期。两门课 20 节正文全部重写，中英文 README 同步更新
 - 85 节完整目录改为折叠展示，降低 README 首屏信息密度

@@ -1,78 +1,25 @@
 #!/usr/bin/env bash
+# Verify every course anchor against the pinned upstream checkout.
+# The checkout comes from prepare_upstream.sh (or set DSH_SOURCE_DIR yourself).
 set -euo pipefail
-
 course_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 lock_file="$course_root/upstream.lock.json"
-manifest="$course_root/source-manifest.json"
-cache_root="${DSH_ADVANCED_CACHE_DIR:-${TMPDIR:-/tmp}/deepseek-harness-advanced-course}"
+cache_root="${DSH_COURSE_CACHE_DIR:-${TMPDIR:-/tmp}/deepseek-harness-course}"
 repo_root="$cache_root/source"
 
-[[ -d "$repo_root/.git" ]] || { printf 'upstream checkout is absent; run prepare_upstream.sh first\n' >&2; exit 2; }
+if [[ -n "${DSH_SOURCE_DIR:-}" ]]; then
+  repo_root="$DSH_SOURCE_DIR"
+elif [[ ! -d "$repo_root/.git" ]]; then
+  printf 'upstream checkout is absent; run prepare_upstream.sh or set DSH_SOURCE_DIR\n' >&2
+  exit 2
+fi
+
 commit="$(node -e 'const fs=require("fs"); const x=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); process.stdout.write(x.commit)' "$lock_file")"
 actual="$(git -C "$repo_root" rev-parse HEAD)"
 printf 'locked commit: %s\ncheckout commit: %s\n' "$commit" "$actual"
-[[ "$actual" == "$commit" ]] || { printf 'FAIL: checkout is not on the locked commit\n' >&2; exit 1; }
+if [[ "$actual" != "$commit" ]]; then
+  printf 'FAIL: checkout is not on the locked commit\n' >&2
+  exit 1
+fi
 
-missing=0
-while IFS= read -r path; do
-  if [[ ! -e "$repo_root/$path" ]]; then
-    printf 'MISSING: %s\n' "$path"
-    missing=1
-  fi
-done < <(node -e 'const fs=require("fs"); const x=JSON.parse(fs.readFileSync(process.argv[1],"utf8")); for (const e of x.entries) for (const p of e.paths) console.log(p)' "$manifest")
-
-[[ "$missing" -eq 0 ]] || { printf 'FAIL: source manifest drifted\n' >&2; exit 1; }
-
-node -e '
-  const fs = require("fs")
-  const path = require("path")
-  const [manifestPath, repoRoot] = process.argv.slice(1)
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"))
-
-  function collectFiles(target, files) {
-    const stat = fs.statSync(target)
-    if (stat.isFile()) {
-      files.push(fs.readFileSync(target))
-      return
-    }
-    if (!stat.isDirectory()) return
-    for (const entry of fs.readdirSync(target, { withFileTypes: true })) {
-      if (entry.isSymbolicLink()) continue
-      collectFiles(path.join(target, entry.name), files)
-    }
-  }
-
-  const missing = []
-  for (const entry of manifest.entries) {
-    const files = []
-    for (const sourcePath of entry.paths) collectFiles(path.join(repoRoot, sourcePath), files)
-    for (const symbol of entry.symbols) {
-      const needle = Buffer.from(symbol)
-      if (!files.some((file) => file.includes(needle))) missing.push(`lesson ${entry.lesson}: ${symbol}`)
-    }
-  }
-  if (missing.length > 0) {
-    for (const symbol of missing) console.error(`MISSING SYMBOL: ${symbol}`)
-    process.exit(1)
-  }
-' "$manifest" "$repo_root"
-
-printf 'source manifest: ok (paths and symbols)\n'
-
-# Re-verify every lesson's anchors (paths, symbols, source comments) through
-# the shared study tooling.  Each lesson's code.ts exits non-zero on a broken
-# anchor, so upstream drift becomes loud instead of silently stale material.
-node_bin="$(command -v node)"
-drift_failed=0
-for lesson_code in "$course_root"/[0-9][0-9]_*/code.ts; do
-  if ! DSH_SOURCE_DIR="$repo_root" "$node_bin" --experimental-strip-types "$lesson_code" >/dev/null 2>"$course_root/.drift-lesson.err"; then
-    printf 'ANCHOR DRIFT in %s:\n' "${lesson_code#"$course_root"/}"
-    sed 's/^/    /' "$course_root/.drift-lesson.err"
-    drift_failed=1
-  fi
-done
-rm -f "$course_root/.drift-lesson.err"
-
-[[ "$drift_failed" -eq 0 ]] || { printf 'FAIL: lesson anchors drifted from the locked snapshot\n' >&2; exit 1; }
-
-printf 'lesson anchors: ok (verified against %s)\n' "$commit"
+DSH_SOURCE_DIR="$repo_root" node --experimental-strip-types "$course_root/scripts/check_anchors.ts"

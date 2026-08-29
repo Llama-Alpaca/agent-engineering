@@ -77,3 +77,16 @@
 4. 根 README.md / README.en.md 两门课引言改写为 why-first 表述；CHANGELOG 记录。
 
 约束不变：锚点集合与锁定 SHA 不动（新叙事引用的源码事实全部已有验证锚点背书或为已核实的推理叙述）；CI 形态不变。
+
+
+## 第三轮修订（同日晚）：从导读课到动手课
+
+用户复审第二轮后给出根本性判断："看了这两个课程能学到啥？别人根本没必要看这个课程，还不如去看源码。"诊断成立：第二轮产出是"带批注的阅读顺序"，而上游 docs/architecture.md + cookbook 本身已是优秀阅读顺序；课程没有提供源码与官方文档之外的价值增量，学习者全程在"读"、从未在"做"；每课 anchors/code.ts/tests 是课程作者的维护工具而非学习者收获。第三轮决策：
+
+1. **价值定位**：课程 = 带你把 dsh 用起来、扩展起来、拆装起来 + 把设计决策变成可亲手验证的事实。lab 必须真机验证后才能写进课程（作者环境：rc.7 checkout、Node 25、macOS arm64，`pnpm install --frozen-lockfile` 46s、`pnpm run build` 分钟级）。
+2. **零 Key 方案**：scripted LlmAdapter（50 行）注册 `lab-scripted` provider 路由——模型是剧本的，循环/工具管线/会话/取消配平全是真的；与上游 keyless snapshot lane 同构，不是模拟器（模拟器复刻系统，此处系统是真的、只有模型边界可插拔——正是 dsh 的架构承诺）。已验证：完整回合（34 条 durable 事件、真实 bash 工具调用、两个 step）。
+3. **形态革命**：删除两课全部"每课五件套"目录（20 个）；课程十二 = README + labs/（6 lab 文档 + 参考插件源码 + overlay 模板）+ deep-reading/（旧课文 12 篇精华迁移）+ 课程级 anchors.json；课程十三 = README + cases/（8 案例统一工序）+ 课程级 anchors.json。锚点机制保留为维护设施（drift 检测价值真实），但从学习路径上退场。
+4. **break-it 实验法**（课程十三招牌）：跑上游执法测试（绿）→ 临时删掉决策 → 看哪个测试变红 → 还原。A05 全流程实测；标注"实测"的都执行过，"建议"未执行（诚实分层）。
+5. **统一快照**：两课锁 99f6f02；课程十二 82 锚点对 rc.7 复核（唯一漂移 settlePrompt→settleAfterQuiescence 修正并注记）。
+6. **lab 工程事实**（排错清单全部真实踩坑）：插件可用单文件绝对路径挂载（官方 first-plugin 教程模式，放 examples/ 下沿 node_modules 解析 @deepseek-ai/*）；`$DSH_HOME/settings.yaml` 的 agent-default-model 保存选择**优先于组合行**（真实踩坑，转为教材）；overlay 行 id 与 base 撞名会 fail-loud；`dsh plugin add <path>` 是第三方真实分发路径（pnpm 转发器 + bundle reconcile，实测）。
+7. 验证：两课 run_tests.sh 全绿；82+44 锚点对 rc.7 checkout 逐条复核全绿；6 个 lab 端到端真机执行；A05 break-it 全流程执行并还原（user-approval 套件终态 38 绿，源码已还原）。

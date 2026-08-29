@@ -1,0 +1,16 @@
+# Lab 3: your own tool, called by the scripted model.
+- id: agent-default-model
+  config:
+    provider: lab-scripted
+    model: lab-echo-1
+
+- insert:
+    - id: lab-repo-stat
+      name: '/path/to/your/deepseek-harness/examples/lab-src/repo-stat.ts'
+    - id: lab-scripted-llm
+      name: '/path/to/your/deepseek-harness/examples/lab-src/scripted-llm.ts'
+      config:
+        firstToolCall:
+          name: repo_stat
+          args: {}
+        finalText: 'Lab 3 complete: repo_stat reported the git state as canonical JSON.'
