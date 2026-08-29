@@ -1,0 +1,43 @@
+{
+  "lesson": "01",
+  "question": "SDK 的 session/prompt 为什么坚持只返回 messageId 收据，把「这次调用发生了什么」推给客户端？",
+  "readingOrder": [
+    "packages/sdk/protocol/src/types.ts",
+    "packages/sdk/server/src/server.ts",
+    "packages/sdk/client/src/api.ts",
+    "packages/sdk/client/src/client.ts",
+    "python/sdk/src/deepseek_harness/api.py"
+  ],
+  "anchors": [
+    {
+      "path": "packages/sdk/protocol/src/types.ts",
+      "contains": "Durable enqueue receipt",
+      "note": "SessionPromptResult 的类型注释：返回值被明确定义为持久收据而非结果"
+    },
+    {
+      "path": "packages/sdk/server/src/server.ts",
+      "contains": "without assigning later activity to it",
+      "note": "决策宣言：服务器拒绝替客户端归因后续活动"
+    },
+    {
+      "path": "packages/sdk/client/src/api.ts",
+      "symbol": "isInboxReceipt",
+      "note": "区间左端点：agent/inbox/spliced 里的 messageId——消息落入持久 inbox 的那一刻，不是 RPC 返回那一刻"
+    },
+    {
+      "path": "packages/sdk/client/src/client.ts",
+      "symbol": "subscribeSessionTree",
+      "note": "服务器广播、客户端裁剪：subagent 族谱由客户端现场累积，服务器不知道谁关心什么"
+    },
+    {
+      "path": "packages/sdk/client/src/client.ts",
+      "contains": "wire-level cancel",
+      "note": "诚实的无取消契约：超时的请求在服务器侧继续跑——不提供的能力也写进注释"
+    },
+    {
+      "path": "python/sdk/src/deepseek_harness/api.py",
+      "symbol": "_is_inbox_receipt",
+      "note": "第二语言镜像：TS/Python 两个客户端独立投影同一协议，互为合规测试"
+    }
+  ]
+}

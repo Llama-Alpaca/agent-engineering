@@ -1,8 +1,15 @@
-# L07 练习
+# A07 练习：毕业项目
 
-1. 在两个真实 checkout 上重新执行 `git rev-parse HEAD` 与 `git rev-parse <commit>:<path>`，证明主 fixture 的 commit 和 blob id 可复核；不存在的 path 必须显式记录为 added/removed。
-2. 增加 rename + modify 的相似度检测，但要求低置信度结果只能标记 `manual-review`。
-3. 将每个课程 lesson 映射到 source anchors；一个 breaking anchor 改动时，自动列出受影响 lesson。
-4. 为 migration gate 增加“所有 regression test 已通过”证据，禁止只改 manifest 就解除 blocker；同时区分上游 documented contract 与插件自己声明的 experimental consumer dependency。
+本课练习即毕业项目本身（见 README 的步骤与交付物）。补充三个自检问题，答案写进 `migration-notes.md`：
 
-完成标准：能从上游变更回答“哪些课仍可信、哪些课需改写、证据是什么”，而不是仅比较版本号。
+## 1. 断裂归因练习
+
+课程十二 L10 锁定 `settlePrompt`，在 rc.7 上校验器报 BROKEN。请归因：这是改名（语义未变）、拆分（语义搬走）还是语义变化？**改名不需要消费者改代码吗？**——想清楚"源码符号"与"对外契约"的区别，写两行。
+
+## 2. 反向锚点练习
+
+在 master 上，本课程 A03 的四个锚点（ensureStanding / recompose / PresetMountError / PRESET_ID）还绿吗？如果绿，说明什么（preset 语义稳定）；如果红，找出替代符号并判断语义是否漂移。
+
+## 3. 换锁建议练习
+
+假设维护者决定把两门课都换锁到 `b150a551`。用你在迁移报告里的断裂清单，估算工作量：多少锚点要改 path、多少要改 symbol、多少整课结论要重写。给出"换锁 / 保留旧锁加迁移附录"的建议与理由。

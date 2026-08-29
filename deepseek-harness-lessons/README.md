@@ -1,67 +1,69 @@
-# DeepSeek Harness 源码精读与插件工程
+# DeepSeek Harness 源码精读：架构与设计思想
 
-> 课程十二：从固定源码快照理解 DeepSeek Harness 的插件树、Agent Loop、事件溯源与可替换能力。
+> 课程十二：读真实源码，学设计决策。锁定上游快照 `47f9438`（`dsh@0.1.0-rc.5` 附近），12 节课沿一条纵向链路把「一切皆插件」的 Agent Harness 读完。
 
-本课程不是 DeepSeek 官方文档的翻译，也不是稳定 API 使用手册。它锁定一个可复现的上游源码快照，通过观察、源码导读、最小替换和失败注入，回答一个问题：**一条 Agent 任务怎样穿过插件树、模型流、工具管线和 Session 日志，并在不修改核心 loop 的前提下被扩展。**
+## 这门课是什么（2026-08 重新定义）
+
+本课早期版本把每节课做成"自造模拟器"：课程自己写几百行 TypeScript 复刻上游行为，再测试自己的复刻。实践证明那条路走错了——学习者读完记住的是课程作者的玩具，不是 DeepSeek Harness；模拟器与上游各自漂移，绿测试无法证明任何上游事实。
+
+本课现在的形态是一门**源码导读课**：
+
+1. **材料是上游源码本身。** 每节课回答一个设计问题，给出按顺序打开的真实文件清单（`path` + 读什么、注意什么），摘录带出处的关键源码，分析"问题 → 备选方案 → 为什么这样选 → 付出什么代价"。
+2. **作业发生在真实源码里。** 练习是在检出快照中找答案、追链路、跑上游自己的测试、做小改动并验证，而不是运行课程预制的假实现。
+3. **课程内容与源码强绑定、可检测漂移。** 每课的 `anchors.json` 登记它引用的每一个路径、符号与源码注释；`code.ts` 是校验器——没有本地 checkout 时校验课程材料自洽（锚点与课程清单一致），有 checkout 时对真实源码逐条复核，上游一变锚点就红。
 
 ## 课程地图
 
-| 课次 | 主题 | 离线产出 |
+| 课次 | 设计问题 | 主要源码 |
 |---|---|---|
-| 00 | 开箱、版本锁定与源码地图 | 快照校验、配置层和事件时间线 |
-| 01 | Cordis 插件生命周期 | Service、inject、事件和 disposer 实验 |
-| 02 | Profile、Bundle 与 Patch | 配置分层、整项替换和 reload 实验 |
-| 03 | Agent Turn / Step Loop | inbox 语义、取消和 balanced trace |
-| 04 | Session 事件溯源 | log、surface、replay、resume、fork |
-| 05 | LLM 流式 Adapter | chunk、tool call、错误和 retry |
-| 06 | Tool Runtime 与安全管线 | schema、policy、并发和取消 |
-| 07 | Capability Seam 与沙箱 | Definition / Provider / Consumer 替换 |
-| 08 | 上下文、压缩、Skill 与 Spill | 课程十一机制的实现映射和消融 |
-| 09 | Subagent、Workflow 与所有权 | spawn/fork、continuation、清理 |
-| 10 | 产品表面与验证体系 | headless、SDK、snapshot、real-composition |
-| 11 | 毕业项目 | 可审计仓库维护 Agent Bundle |
+| 00 | 这个仓库是什么？怎样把它变成可读的 | 根 README、`docs/architecture.md`、CLI 启动链 |
+| 01 | 为什么「一切皆插件」不是全局回调集合 | `vendor/cordis/src/*`：Fiber、effect、Service |
+| 02 | Web/headless/自定义产品如何从同一套包组装出来 | `app-boot`、`bundle/*/cordis.patch.yml`、`vendor/include` |
+| 03 | 一条输入怎样变成模型 step，谁在哪个边界做决定 | `core/agent`、`core/agent-loop` |
+| 04 | 为什么对话历史、模型上下文、UI 回放不是同一个数组 | `core/session`：log、surface、deriveMessages |
+| 05 | Agent 循环如何做到不依赖某一家模型 SDK | `llm/llm`、`llm-deepseek`：adapter、chunk、组装 |
+| 06 | 一个工具从 schema 到 durable result 要过哪些关 | `core/tools`、`agent-loop/tool-calls.ts` |
+| 07 | 怎样替换执行环境而不 fork 工具、不改循环 | `core/scope`、`fs/*`、`sandbox/*`、审批 |
+| 08 | 课程十一的上下文机制在上游分别挂在哪 | `system-prompt`、`compaction`、`spill`、`skill` |
+| 09 | 子任务的新建/fork/后台续跑分别意味着什么 | `subagent/*`、`jobs/*`、`workflow/*` |
+| 10 | 同一骨架怎样成为 headless/ACP/SDK/Python 产品 | `bundle/headless`、`acp`、`sdk`、`python/sdk` |
+| 11 | 毕业课：把读→改→验证走完整一遍 | cookbook + 一次真实的小插件改动 |
 
-每课目录都包含 `README.md`、`code.ts`、`exercise.md` 和 `tests/`。`code.ts` 默认是无网络、无 API Key 的确定性实验；需要上游依赖或真实模型的部分会明确标为可选。
+## 怎么学
 
-## 快速开始
-
-先确认环境：
+准备环境（一次性，约几分钟）：
 
 ```bash
 node --version                 # ^22.19.0 或 >=24.0.0
-corepack pnpm --version        # 课程快照要求 pnpm 11.7.0
+./deepseek-harness-lessons/scripts/prepare_upstream.sh   # 检出锁定 SHA 到课程缓存目录
 ```
 
-运行一节离线实验：
+之后每一课的节奏：
 
-```bash
-./deepseek-harness-lessons/scripts/run_lesson.sh 00
-./deepseek-harness-lessons/scripts/run_lesson.sh 06
+1. `./deepseek-harness-lessons/scripts/run_lesson.sh 03` —— 打印本课问题、阅读地图，并对真实源码校验锚点；
+2. 按地图打开源码读，配合每课 `README.md` 的精读与设计决策分析；
+3. 做 `exercise.md` 的源码作业（阅读题、追踪题、上游实验题、设计反思题）；
+4. 想验证整体没有漂移时，跑 `./deepseek-harness-lessons/scripts/check_upstream_drift.sh`。
 
-# 运行 12 节实验和各课 tests/ 下的确定性测试
-./deepseek-harness-lessons/scripts/run_tests.sh
-```
+不检出上游源码也能运行每课的 `code.ts`（CI 就是这么做的）：它退化为课程材料自洽性校验并输出阅读地图。**但要真正上这门课，请务必检出源码**——本课的功课在源码里，不在本仓里。
 
-脚本只使用 Node 的 type-stripping 运行 `.ts`，不需要 API Key，也不安装上游依赖。若要阅读和运行真实上游源码，使用隔离目录：
+## 每课文件约定
 
-```bash
-./deepseek-harness-lessons/scripts/prepare_upstream.sh
-./deepseek-harness-lessons/scripts/check_upstream_drift.sh
-```
-
-准备脚本默认把 checkout 放在系统临时目录；它不会修改本仓的 Git 配置、依赖或源文件。上游 `pnpm install` 可能安装 worktree-local hooks 和 native 依赖，只有在你明确要求时才执行。
+| 文件 | 作用 |
+|---|---|
+| `README.md` | 源码导读正文：问题、阅读地图、源码精读、设计决策、可迁移思想 |
+| `anchors.json` | 本课引用的真实路径/符号/注释清单（供校验器与漂移检查使用） |
+| `code.ts` | 校验器 + 阅读地图输出（不是模拟实现，不含业务逻辑复刻） |
+| `exercise.md` | 源码作业 |
+| `tests/` | 对校验逻辑的确定性测试（离线，无网络） |
 
 ## 证据边界
 
-- 离线实验证明的是状态机、不变量和设计取舍，不证明真实模型质量。
-- 上游源码实验必须记录 commit SHA；不要把 `master` 当前行为当成永久 API。
-- 真实 API、原生沙箱和性能结果都带环境、模型、日期和配置，不作为通用生产承诺。
-- 工具、文件系统和 SDK 实验只使用临时或可丢弃 workspace。
-
-## 课程顺序
-
-按 L00-L02 基础组装、L03-L07 运行时主干、L08-L10 高级能力与产品入口、L11 毕业项目的顺序学习。12 节离线实验与测试已经完成并接入 CI；真实上游 build 和 real-API smoke 仍是显式可选验证。
+- 课程结论只对锁定 SHA `47f943859bef60e4160492346772ded9b24f765a` 负责；上游是 developer preview，`master` 行为随时会变，锚点校验红掉是特性不是故障。
+- 离线校验证明"课程引用的锚点存在且一致"，不证明上游能安装、构建或跑通真实模型；那些验证发生在你检出的 checkout 里，按每课 README 的上游实验进行。
+- 源码摘录来自 MIT 许可的上游仓库，标注 path + SHA；引用是为教学，本课程与 DeepSeek 官方无关。
+- 真实 API、原生沙箱与性能数字都带环境与日期，不作为通用生产承诺。
 
 ## 上游来源
 
-DeepSeek Harness：<https://github.com/deepseek-ai/deepseek-harness>（MIT）。本课程引用的源码快照、commit 和符号清单见 [`upstream.lock.json`](upstream.lock.json) 与 [`source-manifest.json`](source-manifest.json)。
+DeepSeek Harness：<https://github.com/deepseek-ai/deepseek-harness>（MIT）。锁定信息见 [`upstream.lock.json`](upstream.lock.json)，各课锚点索引见 [`source-manifest.json`](source-manifest.json) 与每课 `anchors.json`。演进到课程十三（锁定 `99f6f02`）后发生了什么，见 [deepseek-harness-advanced-lessons](../deepseek-harness-advanced-lessons/)。

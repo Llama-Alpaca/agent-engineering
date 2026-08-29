@@ -1,40 +1,25 @@
-# L11 毕业练习
+# L11 练习：毕业项目
 
-## 概念题
+本课没有常规书面作业——**毕业项目本身就是作业**。按 README 三选一完成，然后提交以下材料：
 
-1. Definition、Provider、model-facing tool 分别拥有哪类状态？为什么替换 Provider 不应修改 tool schema？
-2. 为什么 approval 必须绑定 action、规范化 path 和精确 payload，并且只能使用一次？
-3. audit projection、模型历史和 spill canonical value 在 resume 时分别从哪里恢复？
+## 交付清单
 
-## 必做改造
+1. **扩展包**：检出快照 `examples/` 下的新目录（含 `package.json`、源码、`tests/`）。
+2. **挂载补丁**：让扩展生效的 `--patch` overlay 文件或最小 profile。
+3. **测试证据**：至少两项——unit 测试、装卸回归（HMR-safety）、keyless 真实组合运行输出。
+4. **设计说明（半页）**，逐条回答：
+   - 它拥有什么状态，状态放在哪（进程内 / storage seam / 从日志重放）？
+   - 它通过 Service、live event、session event 中的哪个与外界交互？
+   - 卸载、取消、恢复时谁负责收尾？哪段代码是证据？
+   - 哪条证据能证明它工作？哪条证据**不能**证明什么？
+   - 你的设计里哪些是通用原理、哪些依赖本快照的 API？
 
-1. 增加 `git-diff` Evidence Provider。它必须实现现有 Definition，替换 Provider 时不能改 `RepoEvidenceTool`。
-2. 为现有 `repo_evidence` record item schema 实现一个无依赖 validator；输入或 Provider 输出不合法时写 audit error 后失败。
-3. 把 `AuditLog` 改为 JSONL 文件实现。使用临时目录，模拟写到一半崩溃后 resume；禁止写课程仓库 tracked files。
-4. 给 review workflow 加一个失败 child，parent report 必须保留失败终态、error、lineage，不能输出空成功。
+## 自检问题（写进设计说明结尾）
 
-## 验收测试
+- 你的扩展被卸载后，`ctx` 上还有你的服务吗？事件监听器呢？哪个测试证明？
+- 如果上游 rc.8 改了你要挂的事件名，你的包会怎么失败（响亮还是静默）？
+- 对照"十条可迁移设计思想"，你的扩展用到了哪几条？违反了哪条？
 
-至少提交下面六类检查，并为每条结论写清 evidence boundary：
+## 完成后
 
-1. unit：observe-before-modify、空 evidence、越界拒绝、forged/mismatched approval、schema validation；
-2. HMR：连续 install/dispose 两次，注册数每次都回到 0；
-3. persistence/replay：重启后 projection 和模型历史一致，tampered history 被拒绝；
-4. real-composition：用固定上游 checkout 加载你的真实 profile/bundle；
-5. keyless snapshot：headless 与 SDK 的核心 durable events 稳定；
-6. optional real-API smoke：无 key 显式 skip，有 key 时记录模型、日期、commit、平台和 workspace 外部复读结果。
-
-## 失败注入
-
-1. Provider 返回没有 locator 的 claim；验证 output validator 和 audit 都能捕获。
-2. 修改 `normalizePath()`，让 `../` 逃逸；写 property test 生成多层路径并证明 policy fail closed。
-3. 删除 `bundle.uninstall()` 的一个 unregister，运行两轮 HMR 检查定位泄漏 owner。
-4. 篡改持久化的 model history，但不改 audit event；`resume()` 必须拒绝恢复。
-
-## 设计实验
-
-把内存 Bundle 迁移成固定上游 checkout 中的可安装 profile：画出 package、Cordis plugin、Provider patch、headless entry 和 Python SDK driver 的组装关系；为每一层指定 unit、course-composition、upstream real-composition 或 real-API 证据。没有真实运行的层必须标 `skip`，不能沿用本课模拟器的 `pass`。
-
-## 交付说明
-
-最终报告不要把模拟结论写成生产承诺。分别列出：固定 SHA 上通过的源码/组装证据、keyless deterministic 证据、可选真实 API 证据、指定平台 sandbox 证据，以及尚未覆盖的故障模型。
+把三样东西带回本仓（可选）：设计说明存为 `examples-notes.md` 放本课目录；把你踩到的上游坑（文档与源码不一致处）记进去——那是课程十三 L07 漂移分析的素材。

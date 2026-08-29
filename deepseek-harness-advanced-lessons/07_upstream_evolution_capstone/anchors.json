@@ -1,0 +1,32 @@
+{
+  "lesson": "07",
+  "question": "一门锁快照的源码课怎么面对「上游在跑」？三个真实快照之间的漂移验证了哪些决策、推翻了哪些？",
+  "readingOrder": [
+    "packages/llm/llm/src/assembler.ts",
+    "packages/acp/acp/src/content.ts",
+    "packages/acp/acp/src/index.ts",
+    "docs/testing.md"
+  ],
+  "anchors": [
+    {
+      "path": "packages/llm/llm/src/assembler.ts",
+      "contains": "The one shared keep/drop decision",
+      "note": "rc.7 新增 assembled()：keep/drop 与 replay 剪裁统一到一处——rc.5 没有这段，是三快照对比的直接证据"
+    },
+    {
+      "path": "packages/acp/acp/src/content.ts",
+      "symbol": "admitAcpPrompt",
+      "note": "rc.5 时 admission 还在 index.ts 里；模块长出来本身就是演进事实"
+    },
+    {
+      "path": "packages/acp/acp/src/index.ts",
+      "symbol": "settleAfterQuiescence",
+      "note": "rc.5 叫 settlePrompt——课程十二 L10 的锚点锁的就是旧名，跨快照跑校验器即可看到断裂"
+    },
+    {
+      "path": "docs/testing.md",
+      "contains": "do not ration real-API tests",
+      "note": "决策存活的样本：master（0.1.1-rc.2）上原文仍在；对照 workflows 目录从 6 个长到 18 个"
+    }
+  ]
+}

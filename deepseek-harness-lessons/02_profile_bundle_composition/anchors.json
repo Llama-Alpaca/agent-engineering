@@ -1,0 +1,51 @@
+{
+  "lesson": "02",
+  "question": "Web、headless 和自定义部署如何从同一套 package 组装出来？为什么 patch 是整行替换而不是 deep merge？",
+  "readingOrder": [
+    "apps/cli/src/profile-boot.ts",
+    "packages/boot/app-boot/src/profile.ts",
+    "packages/bundle/base/cordis.patch.yml",
+    "packages/bundle/web-app/cordis.patch.yml",
+    "packages/bundle/headless/cordis.patch.yml",
+    "vendor/include/src/index.ts",
+    "packages/bundle/base/README.md",
+    "packages/boot/app-boot/src/index.ts"
+  ],
+  "anchors": [
+    {
+      "path": "apps/cli/src/profile-boot.ts",
+      "symbol": "PROFILE_ROOT_CONFIG",
+      "note": "空根配置：树由 patch 层栈叠出来，bundle（发布单位）/profile（组合单位）/patch（唯一修改方式）三者分离"
+    },
+    {
+      "path": "vendor/include/src/index.ts",
+      "symbol": "applyEntryPatches",
+      "note": "patch 应用算法：全部层一次性展平应用到空根，同 id 整行替换"
+    },
+    {
+      "path": "vendor/include/src/index.ts",
+      "contains": "so a dump can never drift from what boots",
+      "note": "dump 与 boot 共用同一次组合调用——所见即所挂载"
+    },
+    {
+      "path": "packages/bundle/base/README.md",
+      "contains": "there is no deep-merge layer",
+      "note": "上游自认的取舍：整行替换换来源可解释性， Known Limitations 第一条"
+    },
+    {
+      "path": "packages/bundle/base/cordis.patch.yml",
+      "contains": "Row order carries no load semantics",
+      "note": "行顺序无语义：激活由服务可用性驱动，配置里写不出启动顺序"
+    },
+    {
+      "path": "packages/boot/app-boot/src/profile.ts",
+      "symbol": "healProfilesModuleFallback",
+      "note": "模块解析自愈：out-of-tree 插件共享唯一 cordis 实例"
+    },
+    {
+      "path": "packages/boot/app-boot/src/index.ts",
+      "symbol": "installFailLoud",
+      "note": "unhandledRejection 必须响亮失败：一行诊断 + 终端恢复 + exit(1)"
+    }
+  ]
+}

@@ -1,86 +1,69 @@
-# L11 毕业项目：可审计仓库维护 Agent Bundle
+# L11：毕业课——读通之后做一次真实的扩展
 
-毕业项目交付的不是一处 core loop 修改，而是一组可装卸、可换 Provider、可恢复的插件契约。这个确定性 Bundle 会先观察证据，再按策略修改；所有允许、询问和拒绝都会进入 durable audit；同一个工具由 headless 和 Python SDK 表面驱动。
+> 本课问题：不修改 `packages/core/` 的任何一行，给一个运行中的 dsh 加一点新能力，并用上游自己的验证体系证明它工作、可拆卸、可审计。
 
-## 先运行
+前 11 课读完了整条链路。毕业课把"读"变成"改"——**在检出的快照里**完成一次最小但真实的扩展。旧版毕业课在本仓里搭一个假想 Bundle；重新定义后的毕业课在真实源码上动手，因为这门课教你的是 DeepSeek Harness，不是课程自造的平行宇宙。
+
+## 阅读地图（先读，再动手）
+
+1. `docs/architecture.md` 的 "Where new behavior goes" 表 —— 选型依据
+2. `docs/cookbook/adding-a-package.md` —— 新包的骨架与 `dsh` 字段
+3. `docs/cookbook/adding-a-tool.md` —— 走 `ctx.tools` 的完整路径
+4. `docs/cookbook/adding-an-llm-adapter.md` —— adapter 路径（选做方向）
+5. `examples/headless-agent/` —— 最小可组合示例，当模板抄
+
+## 毕业项目（三选一）
+
+在快照的 `examples/` 下新建一个包（**不改 `packages/core/*`**），按 cookbook 组装：
+
+**方向 A：一个 human command**（难度低）——注册到 `ctx.commands`，不经过模型 turn 就能执行（例如打印当前 session 的 token 对账，数据来自 L08 的 token-meter 思路）。
+
+**方向 B：一个观察者插件**（难度低）——监听 `session/event`，维护"本会话工具调用统计"（次数、失败率、最大结果），并注册一个 human command 展示。验证 durable 语义：resume 后统计仍在（把统计写进你自己的 storage seam 或从日志重放）。
+
+**方向 C：一个最简工具**（难度中）——`defineTool` 定义一个只读工具（例如 `repo_stat`：读 git 状态返回结构化 JSON），走完 L06 的输出契约（value schema + render 分离）、声明 `isConcurrencySafe`，被 guard 之外的策略管线放行。
+
+### 通用验收（三个方向相同）
+
+1. **挂载走组合**：用 `--patch` overlay 或最小 profile 挂载你的包，不修改 `dsh-base`（L02 的纪律）。
+2. **真实入口验证**：`pnpm install && pnpm run build` 后，从 headless 或示例入口真实启动一次，观察你的扩展生效（方向 B 还要验证 resume）。
+3. **可拆卸**：卸载/去掉 patch 后，注册归零、无事件监听器残留（L01 的 HMR-safety；给插件写一个"装卸 10 次注册数回到基线"的测试）。
+4. **不破坏核心**：`git diff --stat packages/core` 为空。
+5. **写半页设计说明**，回答每课 README 结尾的五个老问题：它拥有什么状态？通过 Service/event/session event 与谁交互？卸载/取消/恢复时谁收尾？哪条证据证明它工作、哪条不能？哪些结论是通用原理、哪些只属于本快照？
+
+### 测试证据（至少三选二）
+
+- 给自己的包写 unit 测试（vitest，参照上游任意 `tests/*.spec.ts` 的风格）；
+- 一个装卸回归测试（HMR-safety）；
+- 一次 keyless 真实组合运行（headless 或 example 入口）+ 输出粘贴进设计说明。
+
+## 上游实验
 
 ```bash
-./deepseek-harness-lessons/scripts/run_lesson.sh 11
-node --experimental-strip-types deepseek-harness-lessons/11_capstone_auditable_bundle/tests/capstone.test.ts
+cd "$(./deepseek-harness-lessons/scripts/prepare_upstream.sh)"
+# 模板：最小示例怎么组装
+cat examples/headless-agent/package.json
+# cookbook 的步骤清单
+sed -n '1,60p' docs/cookbook/adding-a-tool.md
+# 出口检查表：你的扩展落在哪一行
+grep -n "Where new behavior goes" -A 20 docs/architecture.md
 ```
 
-无需安装 npm 包、无需 API key、不会读写真实仓库。模拟仓库、local Provider 和 fake-remote Provider 都固定在 `code.ts`，因此 trace 可以稳定 replay。
+## 全课收束：十条可迁移的设计思想
 
-`pythonSdk()` 只是无依赖的绑定层模拟，并未执行上游 `python/sdk`；`install()` 也只验证课程注册/卸载契约，不等同于构建可发布 package。两者属于 course-composition，真实固定 SHA Loader/profile/Python 入口保持 `skip`。
-测试会双跑 capstone，并把 durable snapshot 的 SHA-256 与 `tests/fixtures/expected.ts` 对照。
+毕业时你应该能对每条给出本课的源码证据：
 
-## 架构
+1. 注册即效应，卸载自动回卷（L01）
+2. 配置即架构：整行替换换来源可解释（L02）
+3. 数据决定，不是监听顺序决定（L03）
+4. 单一 append-only 真相 + 按受众投影（L04）
+5. 不变量要有运行时执法者（L04）
+6. 错误即事件；分类集中、route on code（L05）
+7. 不可翻转的拒绝单独成类（单调 guard）（L06）
+8. 缝隙三角色齐备才算能力；能力事实要诚实（L07）
+9. 授权而非保密；易失性要声明（L09）
+10. Receipt, not result；归因走持久日志（L10）
 
-```mermaid
-flowchart TD
-  D[Evidence capability definition] --> LP[Local Provider]
-  D --> RP[Fake-remote Provider]
-  LP --> T[repo_evidence tool]
-  RP --> T
-  T --> P[Workspace policy]
-  P --> A[(Durable audit log)]
-  T --> C[Spill + compaction view]
-  H[Headless] --> T
-  S[Python SDK] --> T
-  W[Fresh read-only review children] --> T
-  A --> R[Projection / resume]
-  B[Bundle registry] -->|uninstall| Z[registrations = 0]
-```
+## 证据边界
 
-### Capability 与工具
-
-`EvidenceCapabilityDefinition` 拥有 Provider 契约；`LocalEvidenceProvider` 与 `FakeRemoteEvidenceProvider` 都返回 `EvidenceRecord`。`RepoEvidenceTool` 只持有 Provider getter，所以 `selectProvider()` 只改配置引用，tool、policy 和 consumer 都不变。
-
-面向模型的 `repo_evidence` 同时声明 input/output schema。输出包含 `provider`、结构化 `records` 和可回读 `locators`；失败不会返回空成功。
-
-### 策略与审计
-
-`WorkspacePolicy` 拥有已观察路径和 approval 状态：
-
-- workspace 外的 observe/modify 都是 `deny`；
-- workspace 内但没有取得非空 evidence 的 modify 是 `deny`；空查询结果不会把路径标成 observed；
-- 已观察的普通修改是 `allow`；
-- dangerous 修改先返回 `ask + requestId`。requestId 绑定 `modify + 规范化 path + 精确 content`；普通修改夹带 ID、未知/伪造 ID、错路径或替换 payload 都拒绝，正确 ID 成功使用后立即失效。
-
-`AuditLog` 拥有 append-only 事件，`AuditProjection` 只从事件重建 observed/modified/denied/pending/provider/subagent/model-message 视图。`DurableSession.resume()` 还会校验保存的模型历史与 `model.message` 事件一致；两者不一致时 fail closed。
-
-### 上下文与子任务
-
-超过 spill 阈值或 compaction token 预算的工具结果一律先 spill，避免中等长度文本直接压缩成无原值 checkpoint。本毕业项目用自定义 `context.spilled` durable event 保存完整 rendered content 和 locator；模型视图再按预算 compaction，只保留 locator 与标记的 `FACT:`。固定上游的 `ToolExecutionSuccess.value` 是 execution-local canonical value，默认不会写入 durable tool event，因此真实插件若需要恢复完整内容，必须像这里一样显式定义持久化契约。`contextCanonicalIntact=true`、`contextResumeIntact=true` 和 `compactionCount=1` 分别是当前存储、恢复存储与视图证据。
-
-`runFreshReadOnlyReview()` 先创建全部 fresh lineage 并记录 barrier，再在 child 自己的 policy/audit scope 中收集报告和 join；child 的观察不会授予 parent 修改权限。报告固定包含 `workerId`、`mode=fresh`、`readonly=true`、findings 和显式终态。它是确定性并发调度模拟，不创建真实线程。
-
-## 固定快照阅读路径
-
-| 毕业项目组成 | 快照源码锚点 |
-| --- | --- |
-| installable package / bundle | `docs/cookbook/adding-a-package.md` |
-| model-facing tool | `docs/cookbook/adding-a-tool.md` |
-| capability Definition / Provider / Consumer | `docs/capability-seams.md` |
-| Provider 配置替换 | profile / patch 与 capability seam |
-| LLM adapter（扩展阅读） | `docs/cookbook/adding-an-llm-adapter.md` |
-
-这些锚点针对 commit `47f943859bef60e4160492346772ded9b24f765a`。本课类名和函数签名是课程模拟，不声称是 DeepSeek Harness 的稳定 API；真实 Bundle 必须在隔离上游 checkout 做 real-composition 验证。
-
-## 验收矩阵
-
-| 最终约束 | 本课证据 |
-| --- | --- |
-| 不修改 `packages/core/agent-loop` | 从 durable `repo.modified` targets 推导 `coreAgentLoopTouched=false`；真实上游仍须另查 Git diff |
-| Provider 替换只改配置 | tool definition 前后相同，local/remote claim 一致 |
-| 观察后才能修改 | unobserved `deny`，observed safe edit `allow` |
-| 越界写失败且有记录 | `outsideModify=deny` + `audit/policy.denied` |
-| dangerous action 需要批准 | forged/mismatched `deny`；绑定 action/path/content 的 ID 才能 `ask -> approved -> allow`，且只用一次 |
-| 恢复后 audit / 模型历史一致 | `resumeConsistent=true`，tamper test 失败 |
-| spill/compaction 不破坏原值 | locator 回读等于 canonical，事实仍在 view |
-| spill 在恢复后仍可回读 | `contextResumeIntact=true` |
-| fresh read-only child 可追踪 | 结构化 review report + audit lineage |
-| 两种产品入口复用同一工具 | headless=local、Python SDK=fake-remote，schema 不变 |
-| 插件卸载注册归零 | `registrationsAfterUninstall=0` |
-
-`evidenceMatrix` 的 keyless-snapshot 行只确认生成了可比较的 durable trace；真正的确定性证据来自测试中的两次独立运行相等，并同时匹配固定 SHA-256 fixture。unit、HMR、persistence/replay 和 course-composition 也只覆盖本实验边界；固定上游 Loader 的 real-composition 与 real-API 都明确 `skip`。fake-remote 不证明网络故障语义，内存 audit 不证明断电持久性，policy 模拟不等同于 OS sandbox。
+- 毕业项目在**可丢弃 checkout** 里进行；`pnpm install` 会装 worktree-local hooks（对照快照 CONTRIBUTING 的说明），不要在本仓或你的项目仓库里做。
+- 真实 API 冒烟（给方向 C 的工具接真模型）是可选加分项，结论带环境与日期，不作为通用承诺。

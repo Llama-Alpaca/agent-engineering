@@ -34,3 +34,24 @@ if [[ "$missing" -ne 0 ]]; then
 fi
 
 printf 'source manifest: ok\n'
+
+# Re-verify every lesson's anchors (paths, symbols, source comments) against
+# the real checkout.  Each lesson's code.ts exits non-zero on a broken anchor,
+# so upstream drift becomes loud instead of silently stale course material.
+node_bin="$(command -v node)"
+drift_failed=0
+for lesson_code in "$course_root"/[0-9][0-9]_*/code.ts; do
+  if ! DSH_SOURCE_DIR="$repo_root" "$node_bin" --experimental-strip-types "$lesson_code" >/dev/null 2>"$course_root/.drift-lesson.err"; then
+    printf 'ANCHOR DRIFT in %s:\n' "${lesson_code#"$course_root"/}"
+    sed 's/^/    /' "$course_root/.drift-lesson.err"
+    drift_failed=1
+  fi
+done
+rm -f "$course_root/.drift-lesson.err"
+
+if [[ "$drift_failed" -ne 0 ]]; then
+  printf 'FAIL: lesson anchors drifted from the locked snapshot\n' >&2
+  exit 1
+fi
+
+printf 'lesson anchors: ok (verified against %s)\n' "$commit"

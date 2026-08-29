@@ -1,9 +1,25 @@
-# L01 练习
+# A01 练习：源码作业
 
-1. 让 fixture 在 receipt 前发送两次 `idle`、一个其他 session 的 receipt，证明它们都不能结束 run。
-2. 增加孙级 subagent，按 `subagent.started` lineage 动态纳入订阅；未知 child 的 event 必须被过滤。
-3. 给 `next()` 加 timeout，分别记录“客户端停止等待”和“服务端 Agent 停止运行”两种事实，禁止用一个 `cancelled` 混淆。
-4. 对照 Python SDK snapshot，建立字段级兼容矩阵；任何语言绑定都只能改变命名习惯，不能改变 receipt/idle 归因。
-5. 故障注入 shutdown 未响应、stdin EOF 后未退出、SIGTERM 未退出三种情况，检查回收梯子最终 reaps child 且保留 stderr tail。
+## 1. 追踪题：两个端点之间
 
-完成标准：能说明为什么 `messageId` 是 durable enqueue receipt 而不是 prompt-level result，并指出当前 wire 缺少哪些生命周期操作。
+从 `api.ts` 的 prompt 循环里摘出：左端点判定（isInboxReceipt）与右端点判定（idle）之间的每一行在做什么？如果删掉左端点检查、直接从"调用返回"开始收集事件，会把哪些不属于本次调用的活动算进来？
+
+## 2. 思考题：三个"等结果"的死法
+
+假设服务器改为"等 whole-agent idle 后返回最终 assistant 文本"。构造三个场景证明这个设计会失败：(a) 客户端并发两个 prompt；(b) prompt 触发的 turn 结束后后台 job 又开了新 turn；(c) 客户端 30 秒超时断线。每个场景里"结果"归谁？
+
+## 3. 阅读题：收据的持久性
+
+`agent/inbox/spliced` 是 durable session event（课程十二 L03 讲过 inbox 双重体）。回答：客户端崩溃后重连，怎样补齐断线期间的事件？归因的左端点在重连场景下为什么依然成立（对比：如果端点是服务器内存里的"当前请求 id"会怎样）？
+
+## 4. 对比题：TS vs Python
+
+把 `api.ts` 的 prompt 循环与 `api.py` 的对应段落并排读。列出三处结构相同与一处实现不同（提示：队列/迭代器抽象的差异）。回答：哪一处的差异可能造成两个客户端行为分歧？上游用什么机制防这种分歧？
+
+## 5. 实验题：给归因画时间线
+
+在纸上画一条时间线：prompt RPC → admission → inbox splice（收据！）→ turn/start → … → idle。把 A00 的取消围栏与本课的收据放到同一条线上。回答：取消发生在收据之前与之后，客户端分别会观察到什么？
+
+## 6. 设计反思题
+
+你写过的 API 里有没有"帮调用方等结果"的接口（同步生成、阻塞式任务执行）？用本课的三个死法场景审视它；写一段"改为 receipt + 消费者归因"的接口草稿（三行即可）。

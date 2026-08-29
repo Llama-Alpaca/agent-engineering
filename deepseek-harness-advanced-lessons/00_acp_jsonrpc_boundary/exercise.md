@@ -1,8 +1,25 @@
-# L00 练习
+# A00 练习：源码作业
 
-1. 给 NDJSON peer 加一个 pending request 表和 `AbortSignal`。证明 abort 只删除本地 waiter，不伪造远端 prompt 已取消。
-2. 注入第二张非法图片，证明第一张也不会写入 store；再让取消发生在 batch 保存后，证明 object 可以存在但 inbox 仍为空。
-3. 增加 assistant text/image/text 投影，故意让图片读取失败，检查 prompt 不能在 output tail 报错前错误地返回成功。
-4. 模拟 teardown：parent prompt 正在输出、child 可继续。记录“取消 parent -> 等输出 -> drain child -> dispose session”的顺序。
+## 1. 追踪题：取消围栏的精确边界
 
-完成标准：能解释 transport error、content admission error、durable inbox receipt 和 prompt stop reason 分别属于哪一层；任何失败测试都不能靠向协议 stdout 写日志通过。
+在 `content.ts` / `index.ts` 里找到 abort 检查与 `followup` 之间的代码。回答：为什么"不允许任何 await"是硬约束（提示：await 期间 signal 状态可能翻转，而入队动作再也撤不回）？围栏放得太早（校验前）或太晚（入队后）各会牺牲什么？
+
+## 2. 阅读题：两个坏选项的分类
+
+"孤儿附件"与"晚入队消息"都是取消竞态的残留。写 100 字：为什么上游认为前者可容忍、后者不可？你的分类标准是什么（可逆性？可见性？一致性？）。
+
+## 3. 对比题：传输层 vs 协议层的错误观
+
+`transport.ts` 忽略畸形行，`content.ts` 对不认识的块类型直接 `invalid` 拒绝。两个"拒绝"分别保护什么？把两者的分层关系用自己的话写两行。
+
+## 4. 演进题：rc.5 → rc.7 的 admission
+
+在快照里执行 `git show 47f9438 --stat -- packages/acp | head -20`，对比 rc.5 与 rc.7 的 ACP 文件结构。回答：admission 逻辑从哪里搬到了 `content.ts`？这种"长出独立模块"的演进通常由什么压力驱动（提示：测试文件也拆成了 turns/content/dispose/edges 四份）？
+
+## 5. 实验题：读取消竞态的测试
+
+打开 `packages/acp/acp/tests/edges.spec.ts`，找取消相关的用例。记录：它构造了什么竞态（哪个动作插在哪个动作之间）、断言了哪两件事必须同时成立。
+
+## 6. 设计反思题
+
+你的系统里有没有"取消之后还落地了半件事"的场景（半写的文件、半发的消息、半开的 turn）？用本课的分类法（垃圾 vs 语义错误）给它归档，并写出你会把围栏放在哪。

@@ -1,0 +1,42 @@
+{
+  "lesson": "03",
+  "question": "会话想换一套工具组合时，为什么上游规定「已在产出的会话不许换」？组合的挂载与交换怎样做成事务？",
+  "readingOrder": [
+    "packages/preset/agent-presets/README.md",
+    "packages/preset/agent-presets/src/preset.ts",
+    "packages/preset/agent-presets/src/index.ts",
+    "packages/preset/agent-presets/src/mount.ts"
+  ],
+  "anchors": [
+    {
+      "path": "packages/preset/agent-presets/src/index.ts",
+      "symbol": "ensureStanding",
+      "note": "standing mount：roster 每进程只挂一次 preset，会话经 scope 父链 join——同名 preset 全进程同一对象"
+    },
+    {
+      "path": "packages/preset/agent-presets/src/index.ts",
+      "symbol": "recompose",
+      "note": "换组合只许在 agent 一无产出时：中途换会让日志引用新组合无法解释的调用"
+    },
+    {
+      "path": "packages/preset/agent-presets/src/index.ts",
+      "contains": "swapping tools mid",
+      "note": "决策原话：日志约束 API 的形状——事件溯源的数学后果，不是产品偏好"
+    },
+    {
+      "path": "packages/preset/agent-presets/src/mount.ts",
+      "symbol": "PresetMountError",
+      "note": "挂载审计：inactiveRows（半死行）与 leakedServices（泄入 ROOT realm）任一命中即整树回滚"
+    },
+    {
+      "path": "packages/preset/agent-presets/src/mount.ts",
+      "contains": "A rejection leaves nothing mounted",
+      "note": "创建即事务：拒绝后没有半组合状态；PresetTree.write() 置空——preset 是输入永不是持久化目标"
+    },
+    {
+      "path": "packages/preset/agent-presets/src/preset.ts",
+      "symbol": "PRESET_ID",
+      "note": "id 是遏制边界不是风格规则：id 成为路径段，防越出 preset 目录"
+    }
+  ]
+}

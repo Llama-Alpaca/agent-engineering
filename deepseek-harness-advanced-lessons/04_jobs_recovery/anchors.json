@@ -1,0 +1,44 @@
+{
+  "lesson": "04",
+  "question": "后台任务的边界靠保密还是授权？重启丢什么要不要诚实声明？worker 的遏制与安全差在哪？",
+  "readingOrder": [
+    "packages/jobs/jobs/src/index.ts",
+    "packages/jobs/jobs-local/src/index.ts",
+    "packages/jobs/jobs-local/README.md",
+    "packages/workflow/workflow/src/index.ts",
+    "packages/workflow/workflow-worker-thread/src/index.ts",
+    "packages/subagent/subagent-fork-in-process/src/index.ts"
+  ],
+  "anchors": [
+    {
+      "path": "packages/jobs/jobs/src/index.ts",
+      "symbol": "JobRegistry",
+      "note": "抽象契约：直接实例化抛错；durable backend 是 seam 预留位，不是现状"
+    },
+    {
+      "path": "packages/jobs/jobs-local/src/index.ts",
+      "contains": "belongs to another session",
+      "note": "owner fence：ids are predictable, so authorization — not secrecy — is the boundary"
+    },
+    {
+      "path": "packages/jobs/jobs-local/src/index.ts",
+      "contains": "First-wins preserves a teardown force-failure",
+      "note": "first-wins 结算：teardown 强制失败不被迟到 producer 覆盖；completion 最后宣布（reporter 可能同步开模型 turn）"
+    },
+    {
+      "path": "packages/jobs/jobs-local/README.md",
+      "contains": "records die with the harness process",
+      "note": "易失性是声明的：Jobs are process-local——不伪装持久，durable 留作 seam"
+    },
+    {
+      "path": "packages/workflow/workflow-worker-thread/src/index.ts",
+      "contains": "containment rather than a security boundary",
+      "note": "worker 是遏制不是安全：能终止失控代码 ≠ 能对抗恶意代码"
+    },
+    {
+      "path": "packages/subagent/subagent-fork-in-process/src/index.ts",
+      "contains": "completedTurnPrefix",
+      "note": "对照：durable 的那种——子会话日志可恢复，fork 只取平衡前缀"
+    }
+  ]
+}

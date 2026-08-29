@@ -1,23 +1,29 @@
-# L10 练习
+# L10 练习：源码作业
 
-## 概念题
+## 1. 追踪题：一次 prompt 的完整闭环
 
-1. 为什么比较多个入口时应比较 durable event signature，而不是比较 stdout 字符串？
-2. ACP 的 `permission_required`、`denied` 和 `cancelled` 为什么不能折叠成一个 `error`？
-3. unit、real-composition、keyless snapshot 和 real-API smoke 各自缺少哪类证据？
+从 `client.prompt()` 到拿到最终回复，按时序列出：RPC 返回了什么、客户端接下来等哪两个信号、各在哪个文件哪一行判定。回答：如果客户端把"RPC 返回"当作区间左端点而不是 inbox 收据，会多算进什么、少算进什么？
 
-## 改码题
+## 2. 阅读题：传输层的三个边界
 
-1. 增加一个 WebSocket surface，要求它复用 `AgentSpine` 且不改变 durable signature。
-2. 给 JSON-RPC 增加 malformed request 分支；协议错误仍要输出合法 JSON，诊断不能进 stdout。
-3. 给现有 owner-aware `PluginRegistry` 增加 durable install/dispose audit；注入一个错误 owner 的 dispose，验证目标 owner 的注册不变，另一 owner 的同名注册也不会被删除。
+`transport.ts` 里找到：(a) `JSON.parse` 失败的处理；(b) 无 handler 的 request 的错误码；(c) notification 为什么没有响应。然后回答：这个实现与 JSON-RPC 规范的 `-32700` 在哪里分歧？课程为什么要强调"读源码事实，不读教材想象"？
 
-## 失败注入
+## 3. 对比题：headless vs ACP vs SDK 的区间
 
-1. 在构建产物入口故意删掉 `course-capability-stack`，让 mock unit 仍通过，再用 built-artifact smoke 捕获失败。
-2. 把一条诊断日志拼到 `protocolStdout`，验证 `protocolStdoutIsPure()` 失败。
-3. 让 Python SDK 使用不同 request id，观察 transcript 比较为何失败；再决定应该规范化哪些字段、保留哪些 lineage。
+三个表面各自怎么界定"这次任务的活动区间"？（headless 的 seq 切片、ACP 的 admission→quiescence→输出排空、SDK 的 receipt→idle。）回答：为什么没有一个表面用"turn 数"或"固定超时"做区间？
 
-## 设计实验
+## 4. 阅读题：三处同一段注释
 
-写一份 CI 证据报告模板，强制把「无 key 的稳定结论」和「有 key 的当天 smoke」分开。报告至少包含 commit SHA、入口构建版本、模型、平台、跳过原因和 snapshot hash。
+在 headless、ACP、SDK server 三处源码里找到"不做 preset 组合"的声明（提示：搜 preset）。为什么模型侧组合必须留在 host 平面、由 factory setup 做？如果一个 SDK 客户端自己挂 preset，会破坏哪条不变量？
+
+## 5. 实验题：跑一条 keyless lane
+
+可选（需 `pnpm install && pnpm run build`）：在快照里跑 `pnpm run test:snapshot` 或其中某个示例的回放（按 `docs/testing.md` 的指引）。记录：这条 lane 启动了什么真实进程、回放了什么 fixture、断言了什么。如果环境不允许，改为精读 `docs/testing.md` 的 Tiers 一节并写 100 字总结。
+
+## 6. 设计反思题
+
+如果你的 Agent 服务要暴露一个 SDK，借鉴本课写三行设计决定：
+
+- 你的 `prompt()` 返回 receipt 还是结果？为什么？
+- 消费者怎么划"这次调用的活动区间"？
+- 两个语言的客户端怎么保证不漂移？

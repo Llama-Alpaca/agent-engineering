@@ -1,0 +1,32 @@
+{
+  "lesson": "02",
+  "question": "同一条「会话现在什么样」的真相，host 算一遍、客户端存一遍、窗口组装器再算一遍——三层冗余各自回答什么问题？",
+  "readingOrder": [
+    "packages/session/session-projection/src/index.ts",
+    "packages/client/runtime/README.md",
+    "packages/client/runtime/src/client/sessions/projection-store.ts",
+    "packages/session/session-projection-cache/src/index.ts"
+  ],
+  "anchors": [
+    {
+      "path": "packages/session/session-projection/src/index.ts",
+      "contains": "SessionProjectionMap",
+      "note": "host 侧投影定义端：merge-extensible 的投影类型表，包注册「我从日志投影出 X」——推导权唯一"
+    },
+    {
+      "path": "packages/client/runtime/README.md",
+      "contains": "higher-seq-wins",
+      "note": "客户端运行时自述：ProjectionValueStore 由 history-tail 播种、推送帧驱动，规则只有一条"
+    },
+    {
+      "path": "packages/client/runtime/src/client/sessions/projection-store.ts",
+      "symbol": "ProjectionValueStore",
+      "note": "通用投影存储：不理解投影语义也能用单调 seq 正确合并——最便宜的并发协议"
+    },
+    {
+      "path": "packages/client/runtime/README.md",
+      "contains": "shared event window",
+      "note": "窗口组装层：视图只持当前窗口 + 历史分页，节点 identity 在翻页移动中保持"
+    }
+  ]
+}

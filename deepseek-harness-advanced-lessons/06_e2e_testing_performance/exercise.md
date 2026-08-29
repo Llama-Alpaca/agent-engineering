@@ -1,9 +1,25 @@
-# L06 练习
+# A06 练习：源码作业
 
-1. 给课程 trace 增加 streaming finish 事件，验证 finish 后不能再出现 delta；在 claim 中说明它仍然不是 ACP transport snapshot。
-2. 实现一个 session-log normalizer：只规范化允许变化的 request id、UUID、时间和临时 cwd，拒绝事件缺失、重排、非 JSON stdout 与未 scrub 的 request header。
-3. 为一个真实插件写验证矩阵：unit、coverage、real composition、keyless snapshot、built entry、real API、Web browser；无法运行的项目必须写 `skip` 原因。
-4. 比较 `complex-history.perf.ts` 与 `reasoning-chunks.stress.ts`：解释前者为什么不设时间阈值，而后者为什么能对固定浏览器 stress reproduction 使用 250 ms budget。
-5. 构造“mock-green”反例：内存 fake 的 tool test 通过，但 published entry 丢失 plugin export。指出哪一条 Loader/built-artifact smoke 才能抓住它。
+## 1. 阅读题：五条 lane 的"绝不证明"栏
 
-完成标准：所有课程 claim 都带 limitation；离线输出不会出现任何 `upstream lane: pass`；重复运行的 work-unit 行完全一致，但报告不把它叫作 latency benchmark。
+`docs/testing.md` 读完后，不看本课 README，自己重填"绝不证明"列。对照补齐。然后回答：为什么"绝不证明"栏比"证明"栏更难写、也更重要？
+
+## 2. 追踪题：一次 snapshot 回放跑了什么
+
+从 `test:snapshot` 入口追进去：它启动了什么真实进程（构建产物里的哪个示例）、回放了什么 fixture、断言了什么（system-prompt/tool-schema 钉死在哪）。回答：这条 lane 怎么覆盖"mock 全绿、发布入口失败"的负例？
+
+## 3. 阅读题：replay 只读的 enforcement
+
+`ci.yml` 里 `DSH_SNAPSHOT` 怎么被强制？本地开发者怎么显式录制新基准（找文档或脚本入口）？写出一个"如果 CI 允许写基准"的具体事故链。
+
+## 4. 思考题：skipped-as-success 的边界
+
+e2e 的 fork/Dependabot PR 用 job 级 `if:` 让 skip 报 successful。回答：这个豁免为什么不能推广到"所有没 key 的 PR"？如果推广了，哪类回归会永远看不到？
+
+## 5. 实验题：给自己的项目画 lane
+
+画你项目的测试分层表（几条 lane、各自证明/绝不证明什么）。如果只有一条 lane（全 unit），按本课五条的模式补两条最缺的（提示：real-composition 与发布形态 smoke 通常最缺）。
+
+## 6. 对比题（连回课程十二 L10）
+
+课程十二 L10 说"keyless 与 real-API 结论分栏不混报"；本课说"do not ration"。这两个态度矛盾吗？各用一句话说明它们守的是哪条不同的底线。

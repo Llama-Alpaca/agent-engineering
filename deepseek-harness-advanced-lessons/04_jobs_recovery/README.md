@@ -1,32 +1,64 @@
-# L04：Jobs、Workflow 与恢复边界
+# A04：所有权围栏——Jobs、Workflow 与恢复边界
 
-DeepSeek Harness 的 background jobs 与 dynamic workflow 解决的是两种不同的长任务问题：Jobs 让 producer 的工作脱离当前 step 并可查询/停止；Workflow 在 worker thread 中执行动态编排，并通过 host-side child RPC 启动 Agent。
+> 决策案例：后台任务的 id 是可预测的 `<kind>-N`。把 id 藏起来（保密）还是校验身份（授权）？进程内记录重启即失，是补一个假装持久的层，还是把丢失写成文档？本课讲三个"把工作移出对话"的机制怎么回答各自的边界问题。
 
-## Jobs 的当前契约
+## 阅读地图
 
-- 状态是 `running -> stopping -> completed|killed|failed`。`kill()` 先调用 producer `cancel()`；只有它成功返回才提交 `stopping`。
-- `stopping` 仍占 owner 容量，直到 producer `done` 真正结算并释放资源。
-- terminal settlement first-wins；listener 在记录提交之后才收到快照。
-- start 用精确 live Agent 做 ownership/preflight，读写用 session id 授权。job id 可预测，不能承担保密职责。
-- busy owner 的未报告完成进入下一 step；idle owner 可按 `completionDelivery` 唤醒。`maxConsecutiveWakes` 防止完成通知自激循环。
-- 输出与通知按 UTF-8 bytes 截断，不能切出损坏字符。
+1. `packages/jobs/jobs/src/index.ts` —— 抽象契约
+2. `packages/jobs/jobs-local/src/index.ts` —— 进程内实现（本课主菜）
+3. `packages/jobs/jobs-local/README.md` —— 易失性的诚实声明
+4. `packages/workflow/workflow/src/index.ts` —— observe-only 事件面
+5. `packages/workflow/workflow-worker-thread/src/index.ts` —— worker 边界
+6. `packages/subagent/subagent-fork-in-process/src/index.ts` —— 对照：durable 的那种
 
-最重要的负面事实：当前 `jobs-local` 明确是 process-local provider，所有记录都在内存里。进程重启后 job 不恢复。本课目录保留 `jobs_recovery` 名称是为了研究“恢复边界”，不是宣称上游已经提供 checkpoint/lease journal。
+## 案例一：authorization, not secrecy
 
-## Workflow 的当前契约
+`jobs-local` 的 `assertAccess`：`job.owner.id !== caller?.id` → 直接拒绝，错误信息 "belongs to another session"。源码注释把设计立场写成一句格言：
 
-- host 验证 script meta、provider 和 cap，worker 通过 ready/go/cancel 握手启动。
-- `agent`、`parallel`、`pipeline`、`phase`、`log` 由 worker runtime 驱动；host 保持 child registry，并对 terminal race 做 first-wins。
-- 普通 child 失败可投影为 `null`；基础设施失败或 fatal `WorkflowError` 终止整个 run。
-- 每个 child 都必须有一对 `workflow/agent-start` / `workflow/agent-end`，取消和 worker death 时由 host 合成缺失的 end。
-- realm 返回值必须是 plain JSON；循环、函数、BigInt、exotic prototype 都不能越过边界。
-- worker/vm 提供执行隔离与可终止性，不是运行敌意代码的 security sandbox。
+> Ids are predictable, so **authorization — not secrecy** — is the boundary.
 
-## 运行与源码
+可预测的 id 不是漏洞，前提是每个操作都校验"操作者是不是 owner（且是 registry 当前注册的那个实例）"。对照方案"用不可猜的 id 当能力令牌"：令牌会泄漏（日志、崩溃报告、客户端缓存），而授权关系绑定在服务端状态上。准入还有能力检查：`servesOwner`——该 owner 的组合里没有任何 controller 服务它就拒绝，错误信息直接指路 "load @deepseek-ai/dsh-tool-jobs in its composition"（宁可报错指路，不静默降级）。
+
+## 案例二：first-wins 结算与宣布顺序
+
+`jobs-local` 的 `settle` 有三层纪律，注释逐一给了理由：
+
+1. **first-wins**：`if (isTerminal(job.status)) return`——teardown 的强制失败不被迟到的 producer 结算覆盖；
+2. **先落账再放行**：waiter 的 resolver 在记录提交之后才 resolve——醒来的人永远看得到最终事实；
+3. **completion 最后宣布**："a reporter may open a model turn synchronously"——reporter 会立刻开模型 turn，其他观察者必须先看到已提交记录。
+
+## 案例三：易失性是声明的，不是伪装的
+
+`jobs-local` README 的 Known Limitations 第一句："**Jobs are process-local** — records die with the harness process; durable or cross-restart execution needs a separate backend implementing the seam." durable 是 `JobRegistry` 这个抽象 seam 预留的扩展位。对照 `subagent-fork-in-process`：子会话本身是 durable 的（fork 只取 `completedTurnPrefix` 平衡前缀）。三种机制摆在一起，恢复边界一目了然：
+
+| | durable 部分 | 易失部分 | 重启后 |
+|---|---|---|---|
+| subagent | 子会话日志 | 运行态 Activation | 会话可恢复重放 |
+| jobs | 无 | 全部记录 | 任务消失（声明过） |
+| workflow | 各 agent 会话 | run 状态 | run 消失，日志仍在 |
+
+## 案例四：worker 是遏制，不是安全
+
+`workflow-worker-thread` 的模块头注释："it is **containment rather than a security boundary**"。worker + escapable vm 解决的是"失控脚本能被终止、被限额"（并发 agent 上限、总数 1000 回止、同步超时、dispose 宽限后 TERMINATE），不解决"恶意代码逃逸"。host 侧 `assertBodyParses` 同步预解析——为了保住 `start()` 同步抛语法错误的契约，宁可解析两次。`workerSpawnEnv` 清洗为空环境——worker 里没有 ambient credentials。
+
+## 上游实验
 
 ```bash
-node --experimental-strip-types deepseek-harness-advanced-lessons/04_jobs_recovery/code.ts
-node --experimental-strip-types deepseek-harness-advanced-lessons/04_jobs_recovery/tests/run.ts
+cd "$(./deepseek-harness-advanced-lessons/scripts/prepare_upstream.sh)"
+grep -n "belongs to another session" packages/jobs/jobs-local/src/index.ts
+grep -n "First-wins preserves a teardown force-failure" packages/jobs/jobs-local/src/index.ts
+grep -n "records die with the harness process" packages/jobs/jobs-local/README.md
+grep -n "containment rather than a security boundary" packages/workflow/workflow-worker-thread/src/index.ts
 ```
 
-Jobs 从 `packages/jobs/{jobs,jobs-local,tool-jobs}` 阅读；Workflow 从 `workflow/src/index.ts` 与 `workflow-worker-thread/src/{host,runtime,session,protocol,realm}.ts` 阅读。课程代码不启动真实进程或 worker，只复现所有权、结算、通知预算和 materialization 不变量。
+## 设计思想
+
+1. **授权优于保密**：可预测标识 + 身份校验 > 不可猜令牌；把"猜 id"从攻击面移除靠的是校验，不是隐藏。
+2. **结算一次、落账先行、完成最后**：三层顺序各防一种竞态（覆盖、幻读、乱序观察）。
+3. **易失性写进文档，durable 留成 seam**：不伪装、不半吊子补层——"进程内"是明示的当前事实。
+4. **遏制与安全是两种边界**：能终止 ≠ 能对抗；声明清楚，消费者才不会把 worker 当沙箱用。
+
+## 证据边界
+
+- "process-local" 是 `99f6f02` 的现状；上游后续版本若实现 durable backend，本课锚点（README 那句话）会漂移——那正是 A07 毕业课要检查的。
+- worker 限额的具体数值是实现细节，随版本可调。

@@ -1,0 +1,50 @@
+{
+  "lesson": "10",
+  "question": "同一条 Agent spine 怎样成为 headless、ACP、SDK、Python 四个产品？各自的边界证据是什么？",
+  "readingOrder": [
+    "packages/bundle/headless/src/index.ts",
+    "packages/sdk/protocol/src/transport.ts",
+    "packages/sdk/server/src/server.ts",
+    "packages/sdk/client/src/api.ts",
+    "packages/acp/acp/src/index.ts",
+    "python/sdk/src/deepseek_harness/api.py",
+    "docs/testing.md"
+  ],
+  "anchors": [
+    {
+      "path": "packages/bundle/headless/src/index.ts",
+      "symbol": "summarize",
+      "note": "最小表面：活动区间 = 日志 seq 切片（firstSeq 到 whenIdle），没有第二套任务状态"
+    },
+    {
+      "path": "packages/sdk/protocol/src/transport.ts",
+      "symbol": "JsonRpcLineTransport",
+      "note": "NDJSON 传输三事实：畸形行忽略（源码选择，非规范 -32700）、-32601/-32603、notification 无响应"
+    },
+    {
+      "path": "packages/sdk/server/src/server.ts",
+      "contains": "without assigning later activity to it",
+      "note": "receipt 设计宣言：服务器拒绝替客户端归因活动，prompt 只回 durable messageId"
+    },
+    {
+      "path": "packages/sdk/client/src/api.ts",
+      "symbol": "isInboxReceipt",
+      "note": "归因在客户端走持久日志：inbox 收据为左端点、session.status idle 为右端点"
+    },
+    {
+      "path": "packages/acp/acp/src/index.ts",
+      "symbol": "settlePrompt",
+      "note": "ACP 结算（rc.5 形态）：prompt 等到 whole-agent idle 与输出排空才结算，cancel 不误杀无关工作"
+    },
+    {
+      "path": "python/sdk/src/deepseek_harness/api.py",
+      "symbol": "_is_inbox_receipt",
+      "note": "Python 客户端逐行镜像同一 receipt→idle 循环：双客户端互为协议契约十字检查"
+    },
+    {
+      "path": "docs/testing.md",
+      "contains": "do not ration real-API tests",
+      "note": "五条测试 lane 的态度：keyless 必跑但从不假装替代 real-API，结论分栏不混报"
+    }
+  ]
+}

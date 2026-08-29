@@ -1,23 +1,28 @@
-# L09 练习
+# L09 练习：源码作业
 
-## 概念题
+## 1. 追踪题：fork 的家谱
 
-1. fresh、fork、continuation 三者分别复制了什么状态？哪一种最容易意外把父级秘密带入 child？
-2. 为什么 parent projection 不应直接 replay child 的全部消息？请从权限、UI 和恢复三个角度回答。
-3. 「cancelled」和「disposed」是同一个终态吗？用本课的字段说明差异。
+从 `subagent-fork-in-process` 找到子会话 header 写入的字段清单（parentSession、seedLength、delegationDepth……）。回答：delegationDepth 为什么必须是 durable 的？一个 continuable 子代理冷恢复后，哪部分状态来自日志、哪部分来自 descriptor？
 
-## 改码题
+## 2. 阅读题：owner fence 的三重校验
 
-1. 给 `ChildReport` 加上 `startedAt`、`finishedAt` 和 `durationMs`，要求测试仍保持 deterministic。
-2. 将 `runWorkflow()` 改为接收失败重试策略：最多一次 retry，并在 parent log 中记录 attempt lineage。
-3. 为 fork 增加 `redactPrefix()`，证明被复制的前缀经过脱敏后不会影响 parent 的 canonical log。
+在 `jobs-local/src/index.ts` 里找到 (a) owner id 校验、(b) owner 必须是当前注册实例的校验、(c) 准入时的能力检查（servesOwner）。对每一处引用代码并回答：绕过任意一重分别能造成什么？
 
-## 失败注入
+## 3. 阅读题：first-wins 与宣布顺序
 
-1. 让 `cancelParent()` 只设置 parent 标志而不调用 `cancelChild()`，写测试捕获遗留 running child。
-2. 把失败分支改成 `status="succeeded", summary=""`，验证为什么这会破坏 durable replay。
-3. 在 dispose 后允许 `followUp()`，为该路径补一个 fail-closed 断言。
+`jobs-local` 的结算函数为什么 (a) 已终态直接 return、(b) 先落账再释放 waiter、(c) completion 最后宣布？把 (c) 的注释理由（reporter 可能同步开模型 turn）翻译成你自己的话。
 
-## 设计实验
+## 4. 对比题：三个重启场景
 
-设计一个真实 worker-thread workflow 的消息协议：worker 崩溃、parent 重启和重复 report 时如何保持幂等？列出需要落盘的最小事件集合，并说明本课的内存 `SessionLog` 尚未覆盖哪些故障。
+分别描述：(a) 父 agent 崩溃时正在跑的 continuable 子代理、(b) 一个运行中的 job、(c) 一个 workflow run——重启后各自还剩什么？哪些能恢复、依据哪个声明或机制？
+
+## 5. 实验题：给三个需求选机制
+
+- 需求 A：让一个"审查员"用与主对话完全无关的视角通读代码并交报告；
+- 需求 B：跑一个 40 分钟的构建，期间主对话继续干活，之后取结果；
+- 需求 C：并发跑 8 个 agent 做网格搜索，任一失败不拖垮其他。
+各选一种机制并说明为什么另外两种不合适（用本课对比表的维度）。
+
+## 6. 设计反思题
+
+你的项目里"后台工作"的状态放在哪（内存 dict？数据库？）？对照 jobs 的三纪律（owner fence、first-wins、易失性声明）：你违反过哪条、后果是什么？

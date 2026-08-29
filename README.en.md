@@ -84,8 +84,8 @@ flowchart LR
 | Production | [Agent production reliability](agent-ops-lessons/) | Step/cost budgets, circuit breaker, idempotent approvals, durable resume, chaos eval | 10/10 |
 | Frontier | [Ambient Agents](ambient-agent-lessons/) | Scheduled triggers, change detection, incremental research, interruption policy, always-on operations | 10/10 |
 | Frontier | [Agent Harness](harness-lessons/) | Context ledger, disciplined compaction, memory files, subagent isolation, steering & progressive disclosure | 10/10 |
-| Source study | [DeepSeek Harness internals](deepseek-harness-lessons/) | Cordis plugin tree, Agent Loop, event sourcing, provider replacement, product surfaces | 12/12 |
-| Advanced | [DeepSeek Harness protocols and products](deepseek-harness-advanced-lessons/) | ACP/SDK, host projections, presets, jobs/workflows, security, E2E | 8/8 |
+| Source study | [DeepSeek Harness source reading](deepseek-harness-lessons/) | Real-source guided reading: plugin tree, Agent Loop, event sourcing, capability seams, design ideas | 12/12 |
+| Advanced | [DeepSeek Harness design decisions](deepseek-harness-advanced-lessons/) | Eight decision case studies: protocols, attribution, projections, composition, ownership, approval, testing, evolution | 8/8 |
 
 ## Portfolio projects
 
@@ -329,43 +329,43 @@ The first seven courses grew research-assistant into a deep agent that **thinks*
 
 > All **10 lessons** done 🎉. **Two through-lines:** ① a window-economy main line (the fourth budget layer—space: every token pays rent to stay in attention; the ledger measures rent, shaping cuts it, compaction reclaims, externalization ends the lease—the same coin as Course 10's attention economy, spent on the model instead of the human); ② an externalization main line (virtual memory: window=RAM, files=disk, compaction=swap, subagents=process isolation, indexes=lazy loading). Killer row: **"truncation buys survival, not memory."** Landing adds 118 tests to research-assistant (449 total, all green); all nine switches default off with zero tax on clean runs, every test deterministic and reproducible (injectable tokenizer, byte-identical double runs).
 
-## Course 12: DeepSeek Harness Source Study & Plugin Engineering (12 lessons)
+## Course 12: DeepSeek Harness Source Reading — Architecture & Design Ideas (12 lessons)
 
-> This course moves from an abstract Harness to a real codebase. It pins DeepSeek Harness at commit `47f943859bef60e4160492346772ded9b24f765a` and traces one architecture path from CLI/Profile through the Cordis plugin tree, Agent Loop, LLM/Tool runtimes, Session log, and product surfaces. Because upstream is still a developer preview, each lesson separates transferable principles, snapshot-specific implementation, and the course-owned offline model.
+> Redefined in 2026-08: this is now a **guided source-reading course**, not a simulator course. It pins DeepSeek Harness at commit `47f943859bef60e4160492346772ded9b24f765a`; every lesson opens with a design question (why is "everything is a plugin" not a global callback set? why do patches replace whole rows instead of deep-merging?), walks a reading map through the real files, quotes cited source, analyzes the decision (problem → alternatives → trade-off), and distills transferable design ideas. Each lesson keeps an `anchors.json` of every path/symbol/comment it cites; `code.ts` is an anchor checker — without a local checkout it validates course-material consistency, with one it re-verifies every anchor against the real source, so upstream drift fails loudly instead of aging silently.
 
-| # | Lesson | What you learn |
+| # | Lesson | Design question |
 |---:|---|---|
-| 00 | [Baseline, source lock, and map](deepseek-harness-lessons/00_baseline_source_map/) | Pinned SHA, CLI/Profile layers, durable/live events, TypeScript bridge |
-| 01 | [Cordis lifecycle](deepseek-harness-lessons/01_cordis_lifecycle/) | Services, injection, event modes, Fiber disposal, leak-free reloads |
-| 02 | [Profile, Bundle, and Patch](deepseek-harness-lessons/02_profile_bundle_composition/) | Config layers, whole-row replacement, dependency activation, reload provenance |
-| 03 | [Agent Turn / Step Loop](deepseek-harness-lessons/03_agent_turn_step_loop/) | Registry, Inbox, followup/steer/inject, cancellation, balanced events |
-| 04 | [Session event sourcing](deepseek-harness-lessons/04_session_event_sourcing/) | Append-only log, surface projection, resume, fork, reconstruction invariants |
-| 05 | [Streaming LLM Adapter](deepseek-harness-lessons/05_llm_streaming_adapter/) | Provider-neutral streams, chunk assembly, usage, retry, errors, cancellation |
-| 06 | [Tool Runtime and safety pipeline](deepseek-harness-lessons/06_tool_execution_pipeline/) | Schema, policy, hooks, canonical results, concurrency barriers, cancellation |
-| 07 | [Capability seams and sandbox boundary](deepseek-harness-lessons/07_capability_sandbox/) | Definition/Provider/Consumer, isolated realms, approval, fail-closed policy |
-| 08 | [Context, compaction, Skill, and Spill](deepseek-harness-lessons/08_context_scope/) | Prompt assembly, view transforms, ablation matrix, agent-scoped skills |
-| 09 | [Subagent, Workflow, and ownership](deepseek-harness-lessons/09_subagent_workflow/) | Fresh/fork, continuation, parent-child logs, failure propagation, quiescence |
-| 10 | [Product surfaces and evidence levels](deepseek-harness-lessons/10_surfaces_testing/) | Headless, ACP, JSON-RPC, Python SDK, layered testing evidence |
-| 11 | [Capstone: auditable Agent Bundle](deepseek-harness-lessons/11_capstone_auditable_bundle/) | Replaceable evidence Provider, policy audit, recovery, child review, multiple surfaces |
+| 00 | [Unboxing and the source map](deepseek-harness-lessons/00_baseline_source_map/) | How to make a 200-package repo readable; boot chain; empty root + patch stack |
+| 01 | [Cordis: plugins, services, reversible lifecycles](deepseek-harness-lessons/01_cordis_lifecycle/) | Registration-as-effect, epoch reload, waterfall veto |
+| 02 | [Profile, Bundle, Patch: config as architecture](deepseek-harness-lessons/02_profile_bundle_composition/) | Whole-row replacement over deep merge; dump is boot |
+| 03 | [Agent Registry, Inbox, and the Turn/Step loop](deepseek-harness-lessons/03_agent_turn_step_loop/) | Two-queue inbox, data-decides, balanced cancellation |
+| 04 | [Session event sourcing: one log, many projections](deepseek-harness-lessons/04_session_event_sourcing/) | Model-visible means logged — and its runtime enforcer |
+| 05 | [Streaming LLM adapter: chunks and errors-as-events](deepseek-harness-lessons/05_llm_streaming_adapter/) | One assembler; failures normalized into a terminal finish |
+| 06 | [Tool Runtime: contracts, pipeline, concurrency](deepseek-harness-lessons/06_tool_execution_pipeline/) | value/render split, monotonic guards, dispatch-concurrency vs model-order commit |
+| 07 | [Capability seams, scopes, and execution safety](deepseek-harness-lessons/07_capability_sandbox/) | Three-role seams swap providers with zero consumer edits; honest capability facts |
+| 08 | [Where context mechanisms actually live](deepseek-harness-lessons/08_context_scope/) | Course 11's concepts mapped line-by-line onto upstream packages |
+| 09 | [Subagents, jobs, workflows, and ownership](deepseek-harness-lessons/09_subagent_workflow/) | Fork's balanced prefix; authorization over secrecy; declared volatility |
+| 10 | [Product surfaces and evidence layers](deepseek-harness-lessons/10_surfaces_testing/) | Receipt-not-result; protocol surfaces carry committed semantics only |
+| 11 | [Capstone: one real extension after reading](deepseek-harness-lessons/11_capstone_auditable_bundle/) | Write a small plugin in the real checkout and pass upstream's own tests |
 
-> All **12 lessons** are complete. Every lesson includes a principles README, runnable `code.ts`, exercises, and deterministic tests. The default path needs no API key, network, or upstream dependency installation. The scripts verify the pinned checkout and all source anchors. Offline labs prove state-machine and engineering invariants; they do not substitute for an upstream build, a real-model run, or native platform-sandbox validation.
+> All **12 lessons** are complete. Every lesson includes a source-reading README, an `anchors.json` anchor list, a checker `code.ts`, source exercises, and deterministic tests. The offline path needs no API key — but to actually take this course, run `scripts/prepare_upstream.sh` and read the real source: the homework lives in the checkout, not in this repo.
 
-## Course 13: DeepSeek Harness Advanced Protocols, Product Surfaces & Sustainable Plugins (8 lessons)
+## Course 13: DeepSeek Harness Design-Decision Case Studies (8 lessons)
 
-> This course pins upstream at `99f6f02fecdb7dff40c3fbc9470f5907c29f74ca`, around `dsh@0.1.0-rc.7`. It builds on Course 12's runtime spine and follows how ACP, SDKs, Web/TUI, presets, background jobs, and tests consume that spine. The emphasis shifts from reading internals to maintaining cross-surface contracts, recovery boundaries, and upstream compatibility.
+> Also redefined in 2026-08: eight **decision case studies** pinned at `99f6f02fecdb7dff40c3fbc9470f5907c29f74ca` (rc.7). Each case answers "what was the problem, what were the alternatives, what was chosen, what did it cost" — and validates the decision against the real evolution `47f9438 (rc.5) → 99f6f02 (rc.7) → master`. Shares the study tooling and method with Course 12.
 
-| # | Lesson | What you learn |
+| # | Case study | One-line question |
 |---:|---|---|
-| 00 | [ACP rich content / JSON-RPC boundary](deepseek-harness-advanced-lessons/00_acp_jsonrpc_boundary/) | Content admission, cancellation races, request/notification/error routing, stdout purity |
-| 01 | [SDK receipts and activity intervals](deepseek-harness-advanced-lessons/01_sdk_facade/) | Durable enqueue receipts, notification ownership, receipt-to-idle, process disposal |
-| 02 | [Host projections, replay, and long lists](deepseek-harness-advanced-lessons/02_event_projection_replay/) | Higher-seq-wins, consistent cuts, window prepending, stable node identity |
-| 03 | [Presets, standing mounts, and recompose](deepseek-harness-advanced-lessons/03_preset_composition_hmr/) | Generation reuse, scope joins, failed-switch rollback, service-leak checks |
-| 04 | [Jobs, workflows, and recovery boundaries](deepseek-harness-advanced-lessons/04_jobs_recovery/) | Owner fences, first-wins settlement, bounded wakeups, worker cancellation, process-local limits |
-| 05 | [Approval, permission presets, and sandbox evidence](deepseek-harness-advanced-lessons/05_security_approval/) | Paired audit events, fail-closed decisions, durable permission knobs, native evidence |
-| 06 | [E2E, snapshots, and performance evidence](deepseek-harness-advanced-lessons/06_e2e_testing_performance/) | Five official upstream test lanes, real entries, replay, browser perf/stress boundaries |
-| 07 | [Upstream evolution capstone](deepseek-harness-advanced-lessons/07_upstream_evolution_capstone/) | Real `rc.5 -> rc.7` blob drift, consumer compatibility matrices, migration gates |
+| 00 | [Honest protocol boundaries](deepseek-harness-advanced-lessons/00_acp_jsonrpc_boundary/) | After cancellation wins admission: orphan attachment, or a late-queued message? |
+| 01 | [Attribution by receipt, not result](deepseek-harness-advanced-lessons/01_sdk_facade/) | Why does the server refuse to answer "what happened in this call"? |
+| 02 | [Layered projections](deepseek-harness-advanced-lessons/02_event_projection_replay/) | What does each of the three redundant layers answer? |
+| 03 | [Transactional composition: presets & recompose](deepseek-harness-advanced-lessons/03_preset_composition_hmr/) | Why may a producing session never swap compositions? |
+| 04 | [Ownership fences: jobs and recovery](deepseek-harness-advanced-lessons/04_jobs_recovery/) | Secrecy or authorization? Is restart loss documented honestly? |
+| 05 | [Approval and capability evidence](deepseek-harness-advanced-lessons/05_security_approval/) | Allow or deny when nobody answers? How does partial isolation self-report? |
+| 06 | [Evidence layers: five test lanes](deepseek-harness-advanced-lessons/06_e2e_testing_performance/) | What does each lane prove — and never prove? |
+| 07 | [Capstone: real evolution across three snapshots](deepseek-harness-advanced-lessons/07_upstream_evolution_capstone/) | Which decisions did rc.5→rc.7→master drift confirm or overturn? |
 
-> All **8 lessons** are complete, each with keyless deterministic TypeScript labs, exercises, and tests. The course keeps offline invariants, real upstream composition, browser E2E, native sandboxing, and real performance evidence separate.
+> All **8 lessons** are complete. File conventions match Course 12; anchors answer to `99f6f02`, and the capstone runs a real drift audit (consumer compatibility matrix and a relock recommendation).
 
 </details>
 
@@ -379,7 +379,7 @@ python -m pytest portfolio-projects/research-assistant/tests -q
 ./deepseek-harness-advanced-lessons/scripts/run_tests.sh
 ```
 
-The Python projects retain 592 tests; Courses 12 and 13 add 20 dependency-free TypeScript test suites run under Node.js 24 in CI. External model calls are mocked by default. Real-model evaluation, full upstream composition, browser performance, and platform sandbox results require separate validation and must not be inferred from keyless labs.
+The Python projects retain 592 tests; Courses 12 and 13 add 20 dependency-free TypeScript test suites (anchor-checker logic plus course-material consistency) run under Node.js 24 in CI. Both DeepSeek Harness courses answer to their locked SHAs: after `scripts/prepare_upstream.sh` checks out the real source, each lesson's checker re-verifies its anchors against it, and `scripts/check_upstream_drift.sh` re-verifies the whole course. Real-model evaluation, full upstream composition, browser performance, and platform sandbox results require separate validation and must not be inferred from offline checks.
 
 ---
 
@@ -404,8 +404,8 @@ RAG-test/
 ├── agent-ops-lessons/         ← Course 9: Agent Production Reliability / AgentOps (10 lessons, done)
 ├── ambient-agent-lessons/     ← Course 10: Ambient / Always-on Proactive Agents (10 lessons, done)
 ├── harness-lessons/           ← Course 11: Agent Harness & Context Engineering (10 lessons, done)
-├── deepseek-harness-lessons/  ← Course 12: DeepSeek Harness source study & plugin engineering (12 lessons, done)
-├── deepseek-harness-advanced-lessons/ ← Course 13: DeepSeek Harness protocols, products & sustainable plugins (8 lessons, done)
+├── deepseek-harness-lessons/  ← Course 12: DeepSeek Harness source reading — architecture & design ideas (12 lessons, done)
+├── deepseek-harness-advanced-lessons/ ← Course 13: DeepSeek Harness design-decision case studies (8 lessons, done)
 ├── portfolio-projects/        ← 🚀 Production-grade portfolio projects (landings after the courses; main battleground for ops/docint/frontier/gui/agentops/ambient)
 │   ├── knowledge-base-qa/     ←   Enterprise KB QA (RAG, multimodal document intelligence v3)
 │   └── research-assistant/    ←   AI Research Assistant (multi-agent + FastAPI + Docker, long-haul research v5)
