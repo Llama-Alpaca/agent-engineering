@@ -80,5 +80,5 @@ grep -n "containment rather than a security boundary\|maxTotalAgents\|TERMINATE"
 
 ## 证据边界
 
-- `jobs-local` 的恢复缺口是**当前快照的事实**，上游可能在后续版本实现 durable backend（课程十三 L07 的 drift 检查点之一）。
+- `jobs-local` 的恢复缺口是**当前快照的事实**，上游可能在后续版本实现 durable backend（课程十三 A07 的 drift 检查点之一）。
 - subagent 的 out-of-process provider（acp/codex/claude-code）广播 `NO_START_CAPABILITIES`——无法执行的父约束在 start 前拒绝而非静默忽略；本课不深入这些集成。

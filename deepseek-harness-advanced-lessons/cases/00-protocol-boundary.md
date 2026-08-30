@@ -60,7 +60,27 @@ git show 47f9438:packages/acp/acp/src/ 2>/dev/null | head   # 无 content.ts
 
 1. 把取舍原文找出来：`grep -n "never queues a late user message" packages/acp/acp/src/content.ts`——一行注释同时否决了另一个选项。
 2. 跑执法测试：`pnpm vitest run packages/acp/acp --reporter=dot`，然后只用例名回答：取消竞态有哪几个专门用例？
-3. 破坏实验（建议）：把 `admitAcpPrompt` 里"落盘后的取消检查"与 `followup` 之间塞一个 `await new Promise(r => setImmediate(r))`——预期 edges.spec 的取消用例变红。做完还原。
+3. **Break-it 全流程（作者逐条实测）**——取消围栏在 `packages/acp/acp/src/index.ts`：注释 "No await may separate this final abort check from followup" 之下的 `throwIfAborted()` 与 `record.agent.followup(message)` 之间：
+
+   ```bash
+   # 1. 基线：acp 套件全绿
+   pnpm vitest run packages/acp/acp --reporter=dot
+   #       Tests  82 passed (82)
+
+   # 2. 打开围栏：在 throwIfAborted() 与 followup 之间插入一行 await
+   #    await new Promise(resolve => setImmediate(resolve)) // BREAK-IT
+
+   # 3. 重跑：恰好一个用例变红
+   pnpm vitest run packages/acp/acp/tests/turns.spec.ts
+   #   × ACP prompt lifecycle > honors cancellation in the admission-to-followup handoff gap
+   #     AssertionError: expected [ { provider: 'mock', …(5) } ] to deeply equal []
+   #     Tests  1 failed | 29 passed (30)
+
+   # 4. 还原，回到 82 绿
+   git checkout -- packages/acp/acp/src/index.ts
+   ```
+
+   注意失败信息的含义：那条断言检查"取消后没有任何模型请求"——围栏一开，晚到的消息真的入了队、模型真的被调了。用例名里的 "admission-to-followup handoff gap" 就是这条围栏在协议上的名字。
 
 ## 证据边界
 

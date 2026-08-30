@@ -40,7 +40,7 @@ chunk 协议（`types.ts`）是 7 种闭联类型：`block-start` / `text-delta`
 - `block-end` 到达即冻结该块，之后的同 index delta 直接忽略（注释 "ignore stragglers"）——行为不端的 adapter 无法撑大内存或污染已完成的块；
 - 没有显式 `block-start` 的协议（delta-only）按 delta 类型隐式开块；
 - `finish` 缺省为正常 stop；
-- **唯一的 keep/drop 决策**：`max-tokens` 截断时丢弃全部 tool-call 块——截断的工具调用不安全，不可执行。
+- **唯一的 keep/drop 决策**：`max-tokens` 截断时丢弃全部 tool-call 块——截断的工具调用不安全，不可执行。rc.7 把这个决策收进唯一的 `assembled()` 访问器：emitted blocks 与 replay 元数据同源推导，注释原文 "Emitted blocks and replay metadata both derive from this result, so they cannot disagree"。
 
 因为组装集中在一处，"每个 adapter 自己拼 message"这个错误品类整个不存在。token-meter（L08）重放日志求 usage 用的也是同一个 `BlockAssembler`——实时与重放共享算法，天然对账。
 
@@ -74,7 +74,7 @@ sed -n '1,40p' packages/llm/llm/tests/adapter-failure.spec.ts
 
 **代价**：中立 chunk 词汇表是一层真实抽象——provider 出了非常规的新块类型（如新的推理/多模态块）要先扩展协议再写 adapter，比直接用官方 SDK 类型多一步；thunk 化配置与一次性 prepared call 也比"全局 client 单例"多一些仪式感——换来的是配置热切换不撕裂在飞请求。
 
-> 演进注脚：本快照（rc.5）的组装器在 max-tokens 丢块时尚不同步剪裁 replay 元数据；rc.7 引入 `assembled()` 统一决策让两者不可能不一致——课程十三 L07 会把它当作真实演进的案例。
+> 演进注脚：上一快照（rc.5）的组装器在 max-tokens 丢块时还不同步剪裁 replay 元数据；本课程锁定的 rc.7 已引入 `assembled()` 统一决策，让两者不可能不一致（见精读二）。注意这是"语义演进而锚点未断"的例子——`assembled()` 不在任何锚点里，锚点校验抓不住这类漂移，这正是课程十三 A07 要求迁移报告必须有消费者兼容矩阵的原因。
 
 ## 证据边界
 

@@ -84,7 +84,7 @@ flowchart LR
 | Production | [Agent production reliability](agent-ops-lessons/) | Step/cost budgets, circuit breaker, idempotent approvals, durable resume, chaos eval | 10/10 |
 | Frontier | [Ambient Agents](ambient-agent-lessons/) | Scheduled triggers, change detection, incremental research, interruption policy, always-on operations | 10/10 |
 | Frontier | [Agent Harness](harness-lessons/) | Context ledger, disciplined compaction, memory files, subagent isolation, steering & progressive disclosure | 10/10 |
-| Source study | [DeepSeek Harness source reading](deepseek-harness-lessons/) | Real-source guided reading: plugin tree, Agent Loop, event sourcing, capability seams, design ideas | 12/12 |
+| Hands-on | [DeepSeek Harness hands-on source study](deepseek-harness-lessons/) | Run it, extend it, take it apart in a real checkout: 6 keyless labs + 12 deep-reading chapters | 6+12 |
 | Advanced | [DeepSeek Harness design decisions](deepseek-harness-advanced-lessons/) | Eight decision case studies: protocols, attribution, projections, composition, ownership, approval, testing, evolution | 8/8 |
 
 ## Portfolio projects

@@ -21,7 +21,7 @@
 
 > swapping tools mid conversation would leave logged tool calls the new composition cannot make
 
-日志里记着旧组合的工具调用；新组合里那些工具可能不存在了。允许中途换，resume/replay 就会出现"日志引用了当前组合无法解释的调用"。所以规则是：**只有还没产出任何东西的 agent 才能换 preset**。换的动作本身是事务：先确保新 standing mount 成功，再移动 scope 父链接；失败则保持原状（"there is no torn-down state to restore"——没有拆卸就没有恢复）。
+日志里记着旧组合的工具调用；新组合里那些工具可能不存在了。允许中途换，resume/replay 就会出现"日志引用了当前组合无法解释的调用"。所以规则是：**只有还没产出任何东西的 agent 才能换 preset**。注意这条规则的执法位置：`recompose` 自己不读会话历史（它的文档注释明说 "The CALLER owns that check"）——调用方 `packages/host/apiproxy/src/api-proxy.ts` 用 `sessionBlank` 检查把它落成 `agent-preset-locked` 错误（动手验证第 2 步亲手破坏它）。换的动作本身是事务：先确保新 standing mount 成功，再移动 scope 父链接；失败则保持原状（"there is no torn-down state to restore"——没有拆卸就没有恢复）。
 
 ## 案例三：挂载审计——把"半组合"定义为不可能状态
 
@@ -67,7 +67,29 @@ pnpm vitest run packages/preset/agent-presets packages/jobs/jobs-local --reporte
 ```
 
 1. 三句决策原话：`grep -n "swapping tools mid" packages/preset/agent-presets/src/index.ts`、`grep -n "A rejection leaves nothing mounted" packages/preset/agent-presets/src/mount.ts`。
-2. 破坏实验（建议）：把 `recompose` 的"无产出才许换"守卫删掉，重跑 agent-presets 套件——预期至少一个用例变红；读它的用例名，那就是这个决策的执法者。做完还原。
+2. **Break-it 全流程（作者逐条实测）**——守卫在调用方 `packages/host/apiproxy/src/api-proxy.ts`（`if (!sessionBlank(agent.session))` → `agent-preset-locked`，不是 agent-presets 自己）：
+
+   ```bash
+   # 1. 基线：preset + jobs 全绿；执法测试文件也全绿
+   pnpm vitest run packages/preset/agent-presets packages/jobs/jobs-local --reporter=dot
+   #       Tests  194 passed (194)
+   pnpm vitest run packages/host/apiproxy/tests/api-proxy-agent-preset.spec.ts --reporter=dot
+   #       Tests  38 passed (38)
+
+   # 2. 把守卫短路（已开始的会话也放行换组合）
+   sed -i '' 's|if (!sessionBlank(agent.session)) {|if (false) {|' \
+     packages/host/apiproxy/src/api-proxy.ts
+
+   # 3. 重跑：恰好一个用例变红
+   pnpm vitest run packages/host/apiproxy/tests/api-proxy-agent-preset.spec.ts
+   #   × agentPreset.select > refuses once the conversation has started
+   #   Tests  1 failed | 37 passed (38)
+
+   # 4. 还原
+   git checkout -- packages/host/apiproxy/src/api-proxy.ts
+   ```
+
+   执法者的用例名就是这条规则的表述——"refuses once the conversation has started"；它体内在断言 `agent-preset-locked` 错误码。这个守卫在调用方而非 `recompose` 本身，正好演示 A03 的分层：包提供"换组合"的事务原语，"何时允许换"的会话事实归持有日志的那一层。
 
 ## 证据边界
 

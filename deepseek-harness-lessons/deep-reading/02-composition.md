@@ -89,4 +89,4 @@ grep -n "origin, patched by\|renderConfigDump" packages/boot/app-boot/src/index.
 ## 证据边界
 
 - 本课讲锁定 SHA 的组合系统；`--dump-config` 的输出格式与 patch 词汇随上游演进可能变化。
-- 不覆盖 Web 前端的 UI 组合（client plugins）与 preset 系统（课程十三 L03 专题）。
+- 不覆盖 Web 前端的 UI 组合（client plugins）与 preset 系统（课程十三 A03 专题）。

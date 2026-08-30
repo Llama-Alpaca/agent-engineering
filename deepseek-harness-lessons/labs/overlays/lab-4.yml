@@ -1,4 +1,5 @@
-# Lab 1: observer plugin + course-provided scripted adapter (keyless turn).
+# Lab 4: the Lab 1 observer mount, kept under Lab 4's name — run it to produce a
+# session whose live event stream (stderr) and durable log can be compared directly.
 - id: agent-default-model
   config:
     provider: lab-scripted

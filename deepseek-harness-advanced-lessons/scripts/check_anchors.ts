@@ -54,8 +54,7 @@ if (problems.length > 0) {
 
 console.log(`course anchors: ${file.anchors.length} entries for ${file.course} @ ${file.commit.slice(0, 7)}`)
 
-const sourceDir = process.env.DSH_SOURCE_DIR
-  ?? (existsSync(join(courseRoot, '..', '.dsh-source-present')) ? join(courseRoot, '..') : undefined)
+const sourceDir = process.env.DSH_SOURCE_DIR || undefined
 if (sourceDir === undefined || !existsSync(sourceDir)) {
   console.log('no upstream checkout found (set DSH_SOURCE_DIR) — keyless consistency check only')
   process.exit(0)
@@ -64,7 +63,7 @@ if (sourceDir === undefined || !existsSync(sourceDir)) {
 const checks = checkAnchorsAgainstSource(file.anchors, sourceDir)
 const broken = checks.filter((check) => check.status !== 'ok')
 for (const check of checks) {
-  if (check.status !== 'ok') console.error(`BROKEN ANCHOR [${check.status}]: ${check.path} (${check.detail})`)
+  if (check.status !== 'ok') console.error(`BROKEN ANCHOR [${check.status}]: ${check.anchor.path} (${check.detail})`)
 }
 if (broken.length > 0) {
   console.error(`${broken.length}/${checks.length} anchors broken against ${sourceDir}`)

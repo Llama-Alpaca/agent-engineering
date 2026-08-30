@@ -9,7 +9,7 @@
 1. **困境**——一个无法消除的坏情况（取消竞态、进程死亡、无人应答、跨端并发……）；
 2. **选项**——几个都带伤的做法，坏处各是什么；
 3. **上游的选择与证据**——源码注释、测试用例名、README 的 Known Limitations（上游把 why 留在了这些地方，我们只是带你找到它们）；
-4. **动手验证**——跑上游自己的执法测试（绿是基线）；**break-it**：临时删掉那个决策，看哪个测试变红，还原（A05 有作者逐条实测的完整流程：38 绿 → 删一行 → `normalizes a rogue non-vocabulary answer to unavailable` 红，失败信息 `expected 'yolo' to be 'unavailable'` → 还原 → 38 绿）；
+4. **动手验证**——跑上游自己的执法测试（绿是基线）；**break-it**：临时删掉那个决策，看哪个测试变红，还原（A00/A03/A05 有作者逐条实测的完整流程：如 A05 的 38 绿 → 删一行 → `normalizes a rogue non-vocabulary answer to unavailable` 红，失败信息 `expected 'yolo' to be 'unavailable'` → 还原 → 38 绿；A03 的 38 绿 → 短路 apiproxy 的 `sessionBlank` 守卫 → `refuses once the conversation has started` 红）；
 5. **代价**——每个决策诚实地计账；
 6. **迁移**——这套判断在你自己的系统里什么时候适用。
 
@@ -19,10 +19,10 @@
 
 | # | 案例 | 困境 | 亲手验证 |
 |---|---|---|---|
-| 00 | [协议边界的诚实设计](cases/00-protocol-boundary.md) | 取消赢得 admission：孤儿附件还是晚入队消息？ | 取消竞态用例 + 建议破坏实验 |
+| 00 | [协议边界的诚实设计](cases/00-protocol-boundary.md) | 取消赢得 admission：孤儿附件还是晚入队消息？ | 取消竞态用例 + break-it 实测 |
 | 01 | [归因：Receipt 而非结果](cases/01-receipt-not-result.md) | 服务器为什么拒绝回答"这次调用发生了什么"？ | TS/Python 双实现十字检查 |
 | 02 | [投影的分层](cases/02-layered-projections.md) | 同一份会话真相三层各算一遍：浪费还是分工？ | higher-seq-wins 用例 |
-| 03 | [组合的事务性](cases/03-transactional-composition.md) | 已在产出的会话为什么不许换工具组合？ | 实测 194 绿基线 + 破坏建议 |
+| 03 | [组合的事务性](cases/03-transactional-composition.md) | 已在产出的会话为什么不许换工具组合？ | 实测 194 绿基线 + break-it 实测 |
 | 04 | [所有权围栏](cases/04-ownership-fences.md) | 边界靠保密还是授权？重启丢什么要不要写进文档？ | 实测基线 + owner fence 破坏 |
 | 05 | [审批与能力证据](cases/05-fail-closed-approval.md) | 没人应答：放行还是拒绝？ | **break-it 全流程实测** |
 | 06 | [证据分层](cases/06-evidence-layers.md) | 五条测试 lane 各证明什么、绝不证明什么？ | replay 只读纪律的 CI 证据 |

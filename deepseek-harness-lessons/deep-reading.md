@@ -27,4 +27,4 @@ Agent 产品的四根支柱都在以周为单位变化——**模型**（这周�
 
 ## 快照说明（rc.5 → rc.7）
 
-本课程与课程十三统一锁定 `99f6f02`（`dsh@0.1.0-rc.7`）。历史上课程十二曾锁 rc.5（`47f9438`）；两版之间核心六文件（agent.ts、inbox.ts、session、tools、profile、fiber）几乎逐字节未变，本指南全部锚点已对 rc.7 重新核实——唯一漂移是 ACP 的 `settlePrompt` 改名 `settleAfterQuiescence`（[10-表面](deep-reading/10-surfaces.md) 有注记），它正是课程十三毕业课的演进球证。锚点清单见 [anchors.json](anchors.json)，漂移检查见 `scripts/check_upstream_drift.sh`。
+本课程与课程十三统一锁定 `99f6f02`（`dsh@0.1.0-rc.7`）。历史上课程十二曾锁 rc.5（`47f9438`）；两版之间核心六文件（agent.ts、inbox.ts、session、tools、profile、fiber）几乎逐字节未变，本指南全部锚点已对 rc.7 重新核实——唯一断掉的锚点是 ACP 的 `settlePrompt` 改名 `settleAfterQuiescence`（[10-表面](deep-reading/10-surfaces.md) 有注记），它正是课程十三毕业课的演进球证。同一窗口还有 `assembled()` 这类"符号未断、语义已变"的演进（[05-LLM](deep-reading/05-llm.md) 演进注脚）——锚点校验抓不住它，这是锚点机制的能力边界，不是漂移的全部。锚点清单见 [anchors.json](anchors.json)，漂移检查见 `scripts/check_upstream_drift.sh`。

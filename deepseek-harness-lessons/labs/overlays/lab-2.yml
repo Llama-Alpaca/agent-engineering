@@ -1,4 +1,4 @@
-# Lab 1: observer plugin + course-provided scripted adapter (keyless turn).
+# Lab 2: same mount as Lab 1 — the exercise edits scripted-llm.ts itself, then reruns with this overlay.
 - id: agent-default-model
   config:
     provider: lab-scripted

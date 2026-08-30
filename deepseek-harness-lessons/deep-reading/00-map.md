@@ -50,7 +50,7 @@ dsh 把这三件事都当工程问题解决：`docs/architecture.md` 一页纸�
 
 ```bash
 cd "$(./deepseek-harness-lessons/scripts/prepare_upstream.sh)"
-git log -1 --format='%H %ci %s'          # 确认在 47f9438
+git log -1 --format='%H %ci %s'          # 确认在 99f6f02（rc.7，见 upstream.lock.json）
 ls packages | wc -l                       # 感受规模
 ls packages/core packages/llm             # 找到 core 五件套与 llm
 sed -n '1,60p' docs/architecture.md       # 精读开头
@@ -69,5 +69,5 @@ grep -n "Where new behavior goes" -A 20 docs/architecture.md   # 出口检查表
 
 ## 证据边界
 
-- 本课所有引用对锁定 SHA `47f9438` 负责；上游是 developer preview，README 明说 "THERE WILL BE COMPATIBILITY-BREAKING CHANGES"。
+- 本课所有引用对锁定 SHA `99f6f02`（rc.7，与 labs 及课程十三共用同一 checkout）负责；上游是 developer preview，README 明说 "THERE WILL BE COMPATIBILITY-BREAKING CHANGES"。
 - 读文档与源码证明的是设计意图与结构，不证明上游能安装、构建或跑通真实模型——那需要你在 checkout 里执行 `pnpm install && pnpm run build`（可选实验）。

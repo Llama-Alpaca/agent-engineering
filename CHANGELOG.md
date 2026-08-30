@@ -19,6 +19,12 @@
 
 ### Changed
 
+- **两门 DeepSeek Harness 课程验收修复**（2026-08-30，独立验收发现的问题逐项修复，全部修复经复跑验证）：
+  - 修复 A07 毕业课指向已删除的第二版文件布局（`10_surfaces_testing/code.ts`、`{lesson}_*/code.ts`）——drift 审计改用现有课程级 `scripts/check_anchors.ts`，命令全部重新实测（rc.5 树上 1/82 锚点断裂 `settleAfterQuiescence`、rc.7 与 master `b150a551` 全绿；44 锚点在 master 全部存活）
+  - 纠正 A07 一处未核实的演进声称：workflows 实为 rc.5/rc.7 均 15 个 → master 18 个，新增 `ci-master`/`release-publish`/`release-vendor-publish` 发布管道（非平台 lane，平台 lane 在 rc.5 已齐备）；补记 `b150a551` 完整 SHA
+  - 修复 L00 残留 rc.5 锁定 SHA（"确认在 47f9438"两处 → `99f6f02`）；课程十三交叉引用统一为 A0x 编号（L02/L05/L09/L10 四处原混用 L0x）；L05 演进注脚改写为 rc.5→rc.7 口吻并在正文补 `assembled()`（rc.7 已引入，原注脚仍自述"本快照 rc.5"）；deep-reading.md "唯一漂移"措辞区分为锚点断裂与语义演进；L08 补课程十一（`harness-lessons/`）前置说明；英文根 README 课程汇总行同步为 6 lab + 12 章
+  - A00/A03 的破坏实验升级为作者实测并写进正文（A00：82 绿 → 取消围栏内插 await → `honors cancellation in the admission-to-followup handoff gap` 红 `expected [ { provider: 'mock', … } ] to deeply equal []`；A03：38 绿 → 短路 apiproxy 的 `sessionBlank` 守卫 → `refuses once the conversation has started` 红——并修正原文指错的守卫位置：守卫在调用方 apiproxy，不在 `recompose`）
+  - 维护设施修复：两门课 `check_anchors.ts` 删除 `.dsh-source-present` 死代码、修复 `BROKEN ANCHOR` 输出丢失路径的 bug；课程十三 `anchors.json` 44 条锚点补 `doc` 字段映射到对应案例；lab-2/lab-4 overlay 注释修正
 - **两门 DeepSeek Harness 课程第三次重定义：从「导读课」改为「动手课」**（2026-08-29，用户评审结论：纯导读相对官方文档价值增量不足，学习者全程在"读"从没在"做"）：
   - 课程十二重构为「实战通读」——`labs/` 六个实验（观察者插件、scripted LLM adapter 零 Key 驱动真实循环、defineTool 真工具、读 append-only 会话日志、策略门拒绝、委派子代理并找到 durable 子会话），全部命令与输出由课程作者在锁定 SHA 真机执行验证；旧 12 个"每课五件套"目录删除，课文精华迁移为 `deep-reading/` 12 章参考层；锚点从每课收敛为课程级 `anchors.json` + `scripts/check_anchors.ts`
   - 课程十三重构为「设计决策案例研习」——`cases/` 八个案例统一工序（困境 → 选项 → 证据 → 动手验证 → 代价 → 迁移）；新增 break-it 实验法并由作者实测（A05：基线 38 绿 → 删除 fail-closed 归一化一行 → `normalizes a rogue non-vocabulary answer to unavailable` 变红 `expected 'yolo' to be 'unavailable'` → 还原全绿；jobs+preset 基线 194 绿实测）

@@ -53,7 +53,7 @@ async prompt(params: SessionPromptParams): Promise<SessionPromptResult> {
 
 ## 精读三：ACP——admission 与结算
 
-ACP（`acp/src/index.ts`，rc.5 快照）把 prompt 的 admission 做成带取消围栏的事务：图片整批校验通过才落盘；取消检查与 `followup` 之间不允许任何 await（rc.5 注释 "the prompt settles only when the agent stops"——结算等到 whole-agent idle 与输出排空，所以一次 cancel 不会误杀无关的自主工作）。stdout 只承载协议帧、诊断走 stderr——协议纯度由组合保证。课程十三 L00 会用 rc.7 的完整版（`content.ts` 的 `admitAcpPrompt`）做案例精读。
+ACP（`acp/src/index.ts`，rc.5 快照）把 prompt 的 admission 做成带取消围栏的事务：图片整批校验通过才落盘；取消检查与 `followup` 之间不允许任何 await（rc.5 注释 "the prompt settles only when the agent stops"——结算等到 whole-agent idle 与输出排空，所以一次 cancel 不会误杀无关的自主工作）。stdout 只承载协议帧、诊断走 stderr——协议纯度由组合保证。课程十三 A00 会用 rc.7 的完整版（`content.ts` 的 `admitAcpPrompt`）做案例精读。
 
 ## 精读四：五条测试 lane
 
@@ -93,5 +93,5 @@ grep -n "32601\|32603\|malformed" packages/sdk/protocol/src/transport.ts | head
 
 ## 证据边界
 
-- 本快照（rc.5）的 ACP admission 尚未拆出 `content.ts`（rc.7 的形态）；课程十三 L00 讲演进后的版本。
+- 本快照（rc.5）的 ACP admission 尚未拆出 `content.ts`（rc.7 的形态）；课程十三 A00 讲演进后的版本。
 - "畸形行忽略"是当前 `JsonRpcLineTransport` 的事实，不是 JSON-RPC 规范要求——读源码事实，不读教材想象。
